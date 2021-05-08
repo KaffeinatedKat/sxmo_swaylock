@@ -72,6 +72,7 @@ implement them), new feature implementations are welcome as pull requests :)
   (thanks to Edd Salkield)
 * FreeBSD: [swaylock-effects](https://www.freshports.org/x11/swaylock-effects/)
 * Gentoo (GURU overlay): [swaylock-effects](https://gpo.zugaina.org/Overlays/guru/gui-apps/swaylock-effects)
+* T2 SDE: [swaylock-effects](https://t2sde.org/packages/swaylock-effects)
 
 ### Compiling from Source
 
