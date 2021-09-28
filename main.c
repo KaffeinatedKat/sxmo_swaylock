@@ -355,9 +355,10 @@ static void layer_surface_configure(void *data,
 	surface->indicator_height = 1;
 	zwlr_layer_surface_v1_ack_configure(layer_surface, serial);
 
-	if (--surface->events_pending == 0) {
+	if (!surface->configured && --surface->events_pending == 0) {
 		initially_render_surface(surface);
 	}
+	surface->configured = true;
 }
 
 static void layer_surface_closed(void *data,
