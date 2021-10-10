@@ -67,6 +67,7 @@ implement them), new feature implementations are welcome as pull requests :)
 
 ### From Packages
 
+* Alpine Linux: [swaylock-effects](https://pkgs.alpinelinux.org/packages?name=swaylock-effects)
 * Arch Linux (AUR): [swaylock-effects-git](https://aur.archlinux.org/packages/swaylock-effects-git/)
 * Fedora (Copr): [swaylock-effects](https://copr.fedorainfracloud.org/coprs/eddsalkield/swaylock-effects/)
   (thanks to Edd Salkield)
