@@ -134,6 +134,7 @@ struct swaylock_surface {
 	struct pool_buffer *current_buffer;
 	struct swaylock_fade fade;
 	int events_pending;
+	bool configured;
 	bool frame_pending, dirty;
 	uint32_t width, height;
 	uint32_t indicator_width, indicator_height;
