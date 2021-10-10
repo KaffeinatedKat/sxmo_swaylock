@@ -1,6 +1,7 @@
 #include "fade.h"
 #include "pool-buffer.h"
 #include "swaylock.h"
+#include <stdlib.h>
 #include <stdio.h>
 #include <omp.h>
 #include <stdalign.h>
