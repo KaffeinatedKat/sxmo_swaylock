@@ -48,15 +48,6 @@ if get_option('sse')
 	add_project_arguments('-DUSE_SSE', language: 'c')
 endif
 
-test_cflags = [
-	'-mtune=native',
-]
-foreach cflag : test_cflags
-	if cc.has_argument(cflag)
-		add_project_arguments(cflag, language: 'c')
-	endif
-endforeach
-
 wayland_client = dependency('wayland-client')
 wayland_protos = dependency('wayland-protocols', version: '>=1.25', fallback: 'wayland-protocols')
 wayland_scanner = dependency('wayland-scanner', version: '>=1.15.0')
