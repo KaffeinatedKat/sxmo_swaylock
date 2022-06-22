@@ -67,7 +67,7 @@ scdoc = find_program('scdoc', required: get_option('man-pages'))
 wayland_scanner_prog = find_program(wayland_scanner.get_variable('wayland_scanner'))
 
 version = '"@0@"'.format(meson.project_version())
-if git.found()
+if git.found() and import('fs').is_dir('.git')
 	git_commit_hash = run_command([git, 'describe', '--always', '--tags'], check: false)
 	git_branch = run_command([git, 'rev-parse', '--abbrev-ref', 'HEAD'], check: false)
 	if git_commit_hash.returncode() == 0 and git_branch.returncode() == 0
