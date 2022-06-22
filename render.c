@@ -95,7 +95,7 @@ void render_frame_background(struct swaylock_surface *surface) {
 
 	wl_surface_set_buffer_scale(surface->surface, surface->scale);
 	wl_surface_attach(surface->surface, surface->current_buffer->buffer, 0, 0);
-	wl_surface_damage(surface->surface, 0, 0, surface->width, surface->height);
+	wl_surface_damage_buffer(surface->surface, 0, 0, INT32_MAX, INT32_MAX);
 	wl_surface_commit(surface->surface);
 }
 
@@ -214,12 +214,18 @@ void render_frame(struct swaylock_surface *surface) {
 
 	if (state->args.indicator ||
 			(upstream_show_indicator && state->auth_state != AUTH_STATE_GRACE)) {
-		// Draw circle
+		// Fill inner circle
+		cairo_set_line_width(cairo, 0);
+		cairo_arc(cairo, buffer_width / 2, buffer_diameter / 2,
+				arc_radius - arc_thickness / 2, 0, 2 * M_PI);
+		set_color_for_state(cairo, state, &state->args.colors.inside);
+		cairo_fill_preserve(cairo);
+		cairo_stroke(cairo);
+
+		// Draw ring
 		cairo_set_line_width(cairo, arc_thickness);
 		cairo_arc(cairo, buffer_width / 2, buffer_diameter / 2, arc_radius,
 				0, 2 * M_PI);
-		set_color_for_state(cairo, state, &state->args.colors.inside);
-		cairo_fill_preserve(cairo);
 		set_color_for_state(cairo, state, &state->args.colors.ring);
 		cairo_stroke(cairo);
 
@@ -408,7 +414,7 @@ void render_frame(struct swaylock_surface *surface) {
 				arc_radius + arc_thickness / 2, 0, 2 * M_PI);
 		cairo_stroke(cairo);
 
-		// display layout text seperately
+		// display layout text separately
 		if (layout_text) {
 			cairo_text_extents_t extents;
 			cairo_font_extents_t fe;
@@ -443,18 +449,23 @@ void render_frame(struct swaylock_surface *surface) {
 				new_width = extents.width + 2 * box_padding;
 			}
 		}
+	}
 
-		if (buffer_width != new_width || buffer_height != new_height) {
-			destroy_buffer(surface->current_buffer);
-			surface->indicator_width = new_width;
-			surface->indicator_height = new_height;
-			render_frame(surface);
-		}
+	// Ensure buffer size is multiple of buffer scale - required by protocol
+	new_height += surface->scale - (new_height % surface->scale);
+	new_width += surface->scale - (new_width % surface->scale);
+
+	if (buffer_width != new_width || buffer_height != new_height) {
+		destroy_buffer(surface->current_buffer);
+		surface->indicator_width = new_width;
+		surface->indicator_height = new_height;
+		render_frame(surface);
+		return;
 	}
 
 	wl_surface_set_buffer_scale(surface->child, surface->scale);
 	wl_surface_attach(surface->child, surface->current_buffer->buffer, 0, 0);
-	wl_surface_damage(surface->child, 0, 0, surface->current_buffer->width, surface->current_buffer->height);
+	wl_surface_damage_buffer(surface->child, 0, 0, INT32_MAX, INT32_MAX);
 	wl_surface_commit(surface->child);
 
 	wl_surface_commit(surface->surface);
