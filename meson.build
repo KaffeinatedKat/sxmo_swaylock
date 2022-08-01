@@ -17,14 +17,6 @@ add_project_arguments(
 		'-Wno-unused-result',
 		'-Wundef',
 		'-Wvla',
-		'-fopenmp',
-	],
-	language: 'c',
-)
-
-add_project_link_arguments(
-	[
-		'-fopenmp',
 	],
 	language: 'c',
 )
@@ -53,6 +45,7 @@ wayland_protos = dependency('wayland-protocols', version: '>=1.25', fallback: 'w
 wayland_scanner = dependency('wayland-scanner', version: '>=1.15.0')
 xkbcommon = dependency('xkbcommon')
 cairo = dependency('cairo')
+omp = dependency('openmp')
 gdk_pixbuf = dependency('gdk-pixbuf-2.0', required: get_option('gdk-pixbuf'))
 bash_comp = dependency('bash-completion', required: false)
 fish_comp = dependency('fish', required: false)
@@ -133,6 +126,7 @@ dependencies = [
 	dl,
 	xkbcommon,
 	wayland_client,
+	omp
 ]
 
 sources = [
