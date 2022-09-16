@@ -283,7 +283,7 @@ struct zxdg_output_v1_listener _xdg_output_listener;
 static void create_surface(struct swaylock_surface *surface) {
 	struct swaylock_state *state = surface->state;
 
-	if (state->args.fade_in) {
+	if (state->args.allow_fade && state->args.fade_in) {
 		surface->fade.target_time = state->args.fade_in;
 	}
 
@@ -1746,6 +1746,13 @@ static void display_in(int fd, short mask, void *data) {
 	}
 }
 
+static void end_allow_fade_period(void *data) {
+	struct swaylock_state *state = data;
+	if (state->args.allow_fade) {
+		state->args.allow_fade = false;
+	}
+}
+
 static void end_grace_period(void *data) {
 	struct swaylock_state *state = data;
 	if (state->auth_state == AUTH_STATE_GRACE) {
@@ -1805,6 +1812,7 @@ int main(int argc, char **argv) {
 		.clock = false,
 		.timestr = strdup("%T"),
 		.datestr = strdup("%a, %x"),
+		.allow_fade = true,
 		.password_grace_period = 0,
 	};
 	wl_list_init(&state.images);
@@ -1933,6 +1941,10 @@ int main(int argc, char **argv) {
 	loop_add_fd(state.eventloop, get_comm_reply_fd(), POLLIN, comm_in, NULL);
 
 	loop_add_timer(state.eventloop, 1000, timer_render, &state);
+
+	if (state.args.fade_in) {
+		loop_add_timer(state.eventloop, state.args.fade_in, end_allow_fade_period, &state);
+	}
 
 	if (state.args.daemonize && state.args.fade_in) {
 		loop_add_timer(state.eventloop, state.args.fade_in + 500, daemonize_done, &daemonfd);

@@ -76,6 +76,7 @@ struct swaylock_args {
 	char *timestr;
 	char *datestr;
 	uint32_t fade_in;
+	bool allow_fade;
 	bool password_submit_on_touch;
 	uint32_t password_grace_period;
 	bool password_grace_no_mouse;
