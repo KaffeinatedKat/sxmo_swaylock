@@ -352,9 +352,11 @@ static void initially_render_surface(struct swaylock_surface *surface) {
 		wl_region_destroy(region);
 	}
 
-	render_frame_background(surface);
-	render_background_fade_prepare(surface, surface->current_buffer);
-	render_frame(surface);
+	if (!surface->state->ext_session_lock_v1) {
+		render_frame_background(surface);
+		render_background_fade_prepare(surface, surface->current_buffer);
+		render_frame(surface);
+	}
 }
 
 static void layer_surface_configure(void *data,
