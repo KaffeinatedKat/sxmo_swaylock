@@ -318,7 +318,7 @@ cairo_surface_t *load_background_image(const char *path) {
 }
 
 void render_background_image(cairo_t *cairo, cairo_surface_t *image,
-		enum background_mode mode, int buffer_width, int buffer_height) {
+		enum background_mode mode, int buffer_width, int buffer_height, double alpha) {
 	double width = cairo_image_surface_get_width(image);
 	double height = cairo_image_surface_get_height(image);
 
@@ -380,6 +380,6 @@ void render_background_image(cairo_t *cairo, cairo_surface_t *image,
 		assert(0);
 		break;
 	}
-	cairo_paint(cairo);
+	cairo_paint_with_alpha(cairo, alpha);
 	cairo_restore(cairo);
 }

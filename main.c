@@ -257,7 +257,6 @@ static void destroy_surface(struct swaylock_surface *surface) {
 	destroy_buffer(&surface->buffers[1]);
 	destroy_buffer(&surface->indicator_buffers[0]);
 	destroy_buffer(&surface->indicator_buffers[1]);
-	fade_destroy(&surface->fade);
 	wl_output_destroy(surface->output);
 	free(surface);
 }
@@ -341,7 +340,6 @@ static void initially_render_surface(struct swaylock_surface *surface) {
 
 	if (!surface->state->ext_session_lock_v1) {
 		render_frame_background(surface);
-		render_background_fade_prepare(surface, surface->current_buffer);
 		render_frame(surface);
 	}
 }
@@ -385,7 +383,6 @@ static void ext_session_lock_surface_v1_handle_configure(void *data,
 	surface->indicator_height = 0;
 	ext_session_lock_surface_v1_ack_configure(lock_surface, serial);
 	render_frame_background(surface);
-	render_background_fade_prepare(surface, surface->current_buffer);
 	render_frame(surface);
 }
 
@@ -632,13 +629,14 @@ static void handle_screencopy_frame_ready(void *data,
 	if (image == NULL) {
 		swaylock_log(LOG_ERROR, "Failed to create image from screenshot");
 	} else  {
-		surface->screencopy.image->cairo_surface =
-			apply_effects(image, state, surface->scale);
-		surface->image = surface->screencopy.image->cairo_surface;
+		surface->screencopy.original_image = cairo_surface_duplicate(image);
+		surface->screencopy.image->cairo_surface = image;
+		if (state->args.screenshots) {
+			swaylock_log(LOG_DEBUG, "Loaded screenshot for output %s", surface->output_name);
+			wl_list_insert(&state->images, &surface->screencopy.image->link);
+		}
 	}
 
-	swaylock_log(LOG_DEBUG, "Loaded screenshot for output %s", surface->output_name);
-	wl_list_insert(&state->images, &surface->screencopy.image->link);
 	--surface->events_pending;
 }
 
@@ -686,28 +684,18 @@ static void handle_xdg_output_done(void *data, struct zxdg_output_v1 *output) {
 	swaylock_trace();
 	struct swaylock_surface *surface = data;
 	struct swaylock_state *state = surface->state;
-	cairo_surface_t *new_image = select_image(surface->state, surface);
 
-	if (new_image == surface->image && state->args.screenshots) {
-		static bool has_printed_screencopy_error = false;
-		if (state->screencopy_manager) {
-			surface->screencopy_frame = zwlr_screencopy_manager_v1_capture_output(
-					state->screencopy_manager, false, surface->output);
-			zwlr_screencopy_frame_v1_add_listener(surface->screencopy_frame,
-					&screencopy_frame_listener, surface);
-			surface->events_pending += 1;
-		} else if (!has_printed_screencopy_error) {
-			swaylock_log(LOG_INFO, "Compositor does not support screencopy manager, "
-					"screenshots will not work");
-			has_printed_screencopy_error = true;
-		}
-	} else if (new_image != NULL) {
-		if (state->args.screenshots) {
-			swaylock_log(LOG_DEBUG,
-					"Using existing image instead of taking a screenshot for output %s.",
-					surface->output_name);
-		}
-		surface->image = new_image;
+	static bool has_printed_screencopy_error = false;
+	if (state->screencopy_manager) {
+		surface->screencopy_frame = zwlr_screencopy_manager_v1_capture_output(
+				state->screencopy_manager, false, surface->output);
+		zwlr_screencopy_frame_v1_add_listener(surface->screencopy_frame,
+				&screencopy_frame_listener, surface);
+		surface->events_pending += 1;
+	} else if (!has_printed_screencopy_error) {
+		swaylock_log(LOG_INFO, "Compositor does not support screencopy manager, "
+				"screenshots will not work");
+		has_printed_screencopy_error = true;
 	}
 
 	--surface->events_pending;
@@ -1923,7 +1911,7 @@ int main(int argc, char **argv) {
 		daemonfd = daemonize_start();
 	}
 
-	// Need to apply effects to all images loaded with --image
+	// Need to apply effects to all images
 	struct swaylock_image *iter_image, *temp;
 	wl_list_for_each_safe(iter_image, temp, &state.images, link) {
 		iter_image->cairo_surface = apply_effects(

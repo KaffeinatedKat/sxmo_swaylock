@@ -121,6 +121,7 @@ struct swaylock_surface {
 		uint32_t format, width, height, stride;
 		enum wl_output_transform transform;
 		void *data;
+		cairo_surface_t *original_image;
 		struct swaylock_image *image;
 	} screencopy;
 	struct swaylock_state *state;
@@ -163,7 +164,6 @@ void swaylock_handle_mouse(struct swaylock_state *state);
 void swaylock_handle_touch(struct swaylock_state *state);
 void render_frame_background(struct swaylock_surface *surface);
 void render_background_fade(struct swaylock_surface *surface, uint32_t time);
-void render_background_fade_prepare(struct swaylock_surface *surface, struct pool_buffer *buffer);
 void render_frame(struct swaylock_surface *surface);
 void render_frames(struct swaylock_state *state);
 void damage_surface(struct swaylock_surface *surface);
