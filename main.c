@@ -628,6 +628,8 @@ static void handle_screencopy_frame_ready(void *data,
 			surface->screencopy.transform);
 	if (image == NULL) {
 		swaylock_log(LOG_ERROR, "Failed to create image from screenshot");
+		state->args.screenshots = false;
+		state->args.fade_in = 0; // Fade in is not possible without screenshot
 	} else  {
 		surface->screencopy.original_image = cairo_surface_duplicate(image);
 		surface->screencopy.image->cairo_surface = image;
@@ -645,6 +647,8 @@ static void handle_screencopy_frame_failed(void *data,
 	swaylock_trace();
 	struct swaylock_surface *surface = data;
 	swaylock_log(LOG_ERROR, "Screencopy failed");
+	surface->state->args.screenshots = false;
+	surface->state->args.fade_in = 0; // Fade in is not possible without screenshot
 
 	--surface->events_pending;
 }
@@ -694,7 +698,9 @@ static void handle_xdg_output_done(void *data, struct zxdg_output_v1 *output) {
 		surface->events_pending += 1;
 	} else if (!has_printed_screencopy_error) {
 		swaylock_log(LOG_INFO, "Compositor does not support screencopy manager, "
-				"screenshots will not work");
+				"screenshots / fade-in will not work");
+		state->args.screenshots = false;
+		state->args.fade_in = 0; // Fade in is not possible without screenshot
 		has_printed_screencopy_error = true;
 	}
 
@@ -1878,6 +1884,8 @@ int main(int argc, char **argv) {
 	} else {
 		swaylock_log(LOG_INFO, "Compositor does not support zxdg output "
 				"manager, images assigned to named outputs will not work");
+		state.args.screenshots = false;
+		state.args.fade_in = 0; // Fade in is not possible without screenshot
 	}
 
 	if (state.ext_session_lock_manager_v1) {
