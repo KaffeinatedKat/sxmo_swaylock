@@ -385,6 +385,7 @@ static void ext_session_lock_surface_v1_handle_configure(void *data,
 	surface->indicator_height = 0;
 	ext_session_lock_surface_v1_ack_configure(lock_surface, serial);
 	render_frame_background(surface);
+	render_background_fade_prepare(surface, surface->current_buffer);
 	render_frame(surface);
 }
 
