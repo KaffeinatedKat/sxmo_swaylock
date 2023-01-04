@@ -289,19 +289,6 @@ static void create_surface(struct swaylock_surface *surface) {
 
 	surface->image = select_image(state, surface);
 
-	static bool has_printed_zxdg_error = false;
-	if (state->zxdg_output_manager) {
-		surface->xdg_output = zxdg_output_manager_v1_get_xdg_output(
-				state->zxdg_output_manager, surface->output);
-		zxdg_output_v1_add_listener(
-				surface->xdg_output, &_xdg_output_listener, surface);
-		surface->events_pending += 1;
-	} else if (!has_printed_zxdg_error) {
-		swaylock_log(LOG_INFO, "Compositor does not support zxdg output "
-				"manager, images assigned to named outputs will not work");
-		has_printed_zxdg_error = true;
-	}
-
 	surface->surface = wl_compositor_create_surface(state->compositor);
 	assert(surface->surface);
 
@@ -651,9 +638,7 @@ static void handle_screencopy_frame_ready(void *data,
 
 	swaylock_log(LOG_DEBUG, "Loaded screenshot for output %s", surface->output_name);
 	wl_list_insert(&state->images, &surface->screencopy.image->link);
-	if (--surface->events_pending == 0) {
-		initially_render_surface(surface);
-	}
+	--surface->events_pending;
 }
 
 static void handle_screencopy_frame_failed(void *data,
@@ -662,9 +647,7 @@ static void handle_screencopy_frame_failed(void *data,
 	struct swaylock_surface *surface = data;
 	swaylock_log(LOG_ERROR, "Screencopy failed");
 
-	if (--surface->events_pending == 0) {
-		initially_render_surface(surface);
-	}
+	--surface->events_pending;
 }
 
 static const struct zwlr_screencopy_frame_v1_listener screencopy_frame_listener = {
@@ -726,9 +709,7 @@ static void handle_xdg_output_done(void *data, struct zxdg_output_v1 *output) {
 		surface->image = new_image;
 	}
 
-	if (--surface->events_pending == 0) {
-		initially_render_surface(surface);
-	}
+	--surface->events_pending;
 }
 
 struct zxdg_output_v1_listener _xdg_output_listener = {
@@ -1887,6 +1868,29 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
+	struct swaylock_surface *surface;
+	if (state.zxdg_output_manager) {
+		// Enumerate all outputs first so that screenshots can be obtained
+		// before ext_session_lock_manager_v1_lock(). After the screen is locked,
+		// no screenshot can be retrieved because normal rendering is blocked.
+		wl_list_for_each(surface, &state.surfaces, link) {
+			surface->xdg_output = zxdg_output_manager_v1_get_xdg_output(
+					state.zxdg_output_manager, surface->output);
+			zxdg_output_v1_add_listener(
+					surface->xdg_output, &_xdg_output_listener, surface);
+			surface->events_pending += 1;
+		};
+
+		wl_list_for_each(surface, &state.surfaces, link) {
+			while (surface->events_pending > 0) {
+				wl_display_roundtrip(state.display);
+			}
+		}
+	} else {
+		swaylock_log(LOG_INFO, "Compositor does not support zxdg output "
+				"manager, images assigned to named outputs will not work");
+	}
+
 	if (state.ext_session_lock_manager_v1) {
 		swaylock_log(LOG_DEBUG, "Using ext-session-lock-v1");
 		state.ext_session_lock_v1 = ext_session_lock_manager_v1_lock(state.ext_session_lock_manager_v1);
@@ -1925,7 +1929,6 @@ int main(int argc, char **argv) {
 				iter_image->cairo_surface, &state, 1);
 	}
 
-	struct swaylock_surface *surface;
 	wl_list_for_each(surface, &state.surfaces, link) {
 		create_surface(surface);
 	}
