@@ -1888,6 +1888,21 @@ int main(int argc, char **argv) {
 		state.args.fade_in = 0; // Fade in is not possible without screenshot
 	}
 
+	// Must daemonize before we run any effects, since effects use openmp
+	int daemonfd;
+	if (state.args.daemonize) {
+		wl_display_roundtrip(state.display);
+		daemonfd = daemonize_start();
+	}
+
+	// Need to apply effects to all images *before* requesting ext_session_lock_v1
+	// Otherwise, the screen would be blank while the effects are being applied.
+	struct swaylock_image *iter_image, *temp;
+	wl_list_for_each_safe(iter_image, temp, &state.images, link) {
+		iter_image->cairo_surface = apply_effects(
+				iter_image->cairo_surface, &state, 1);
+	}
+
 	if (state.ext_session_lock_manager_v1) {
 		swaylock_log(LOG_DEBUG, "Using ext-session-lock-v1");
 		state.ext_session_lock_v1 = ext_session_lock_manager_v1_lock(state.ext_session_lock_manager_v1);
@@ -1910,20 +1925,6 @@ int main(int argc, char **argv) {
 			return 2;
 		}
 		return 1;
-	}
-
-	// Must daemonize before we run any effects, since effects use openmp
-	int daemonfd;
-	if (state.args.daemonize) {
-		wl_display_roundtrip(state.display);
-		daemonfd = daemonize_start();
-	}
-
-	// Need to apply effects to all images
-	struct swaylock_image *iter_image, *temp;
-	wl_list_for_each_safe(iter_image, temp, &state.images, link) {
-		iter_image->cairo_surface = apply_effects(
-				iter_image->cairo_surface, &state, 1);
 	}
 
 	wl_list_for_each(surface, &state.surfaces, link) {
