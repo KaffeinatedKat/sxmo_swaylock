@@ -63,7 +63,7 @@ static void timetext(struct swaylock_surface *surface, char **tstr, char **dstr)
 	setlocale(LC_TIME, prevloc);
 }
 
-void render_frame_background(struct swaylock_surface *surface) {
+void render_frame_background(struct swaylock_surface *surface, bool commit) {
 	struct swaylock_state *state = surface->state;
 
 	int buffer_width = surface->width * surface->scale;
@@ -103,7 +103,9 @@ void render_frame_background(struct swaylock_surface *surface) {
 	wl_surface_set_buffer_scale(surface->surface, surface->scale);
 	wl_surface_attach(surface->surface, surface->current_buffer->buffer, 0, 0);
 	wl_surface_damage_buffer(surface->surface, 0, 0, INT32_MAX, INT32_MAX);
-	wl_surface_commit(surface->surface);
+	if (commit) {
+		wl_surface_commit(surface->surface);
+	}
 }
 
 void render_background_fade(struct swaylock_surface *surface, uint32_t time) {
@@ -113,7 +115,7 @@ void render_background_fade(struct swaylock_surface *surface, uint32_t time) {
 
 	fade_update(&surface->fade, time);
 
-	render_frame_background(surface);
+	render_frame_background(surface, true);
 	render_frame(surface);
 }
 

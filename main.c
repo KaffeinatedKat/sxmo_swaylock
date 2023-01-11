@@ -339,7 +339,7 @@ static void initially_render_surface(struct swaylock_surface *surface) {
 	}
 
 	if (!surface->state->ext_session_lock_v1) {
-		render_frame_background(surface);
+		render_frame_background(surface, true);
 		render_frame(surface);
 	}
 }
@@ -381,8 +381,12 @@ static void ext_session_lock_surface_v1_handle_configure(void *data,
 	surface->height = height;
 	surface->indicator_width = 0;
 	surface->indicator_height = 0;
+	// Render before we send the ACK event, so that we minimize flickering
+	// This means we cannot commit immediately after rendering -- we will have
+	// to send the ACK first and then commit.
+	render_frame_background(surface, false);
 	ext_session_lock_surface_v1_ack_configure(lock_surface, serial);
-	render_frame_background(surface);
+	wl_surface_commit(surface->surface);
 	render_frame(surface);
 }
 

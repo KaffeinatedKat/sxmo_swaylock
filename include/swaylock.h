@@ -162,7 +162,7 @@ void swaylock_handle_key(struct swaylock_state *state,
 		xkb_keysym_t keysym, uint32_t codepoint);
 void swaylock_handle_mouse(struct swaylock_state *state);
 void swaylock_handle_touch(struct swaylock_state *state);
-void render_frame_background(struct swaylock_surface *surface);
+void render_frame_background(struct swaylock_surface *surface, bool commit);
 void render_background_fade(struct swaylock_surface *surface, uint32_t time);
 void render_frame(struct swaylock_surface *surface);
 void render_frames(struct swaylock_state *state);
