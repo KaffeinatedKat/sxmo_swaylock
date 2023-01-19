@@ -79,6 +79,7 @@ The following table shows the relation between the swaylock-effect and swaylock 
 | 1.6-2            | 1.5-9-g[235b925d](https://github.com/swaywm/swaylock/tree/235b925df7e1bb82d98f1ac8c02e8f85d0a54ee9) |
 | 1.6-3            | 1.5-9-g[235b925d](https://github.com/swaywm/swaylock/tree/235b925df7e1bb82d98f1ac8c02e8f85d0a54ee9) |
 | 1.6.10           | [1.6](https://github.com/swaywm/swaylock/tree/1.6)                                                  |
+| 1.6.11           | [1.6](https://github.com/swaywm/swaylock/tree/1.6)                                                  |
 
 
 ## Installation

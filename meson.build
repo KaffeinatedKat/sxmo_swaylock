@@ -1,7 +1,7 @@
 project(
 	'swaylock',
 	'c',
-	version: '1.6.10',
+	version: '1.6.11',
 	license: 'MIT',
 	meson_version: '>=0.59.0',
 	default_options: [
