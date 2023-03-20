@@ -201,7 +201,7 @@ void wl_touch_down(void *data, struct wl_touch *wl_touch, uint32_t serial,
 		if (this_surface->keypad_child == surface) {
 			is_for_keypad_surface = true;
 			break;
-		} else if (this_surface->child == surface ||
+		} else if (this_surface->indicator_child == surface ||
 				this_surface->surface == surface) {
 			break;		
 		}
@@ -315,10 +315,6 @@ static void seat_handle_capabilities(void *data, struct wl_seat *wl_seat,
 	if ((caps & WL_SEAT_CAPABILITY_KEYBOARD)) {
 		seat->keyboard = wl_seat_get_keyboard(wl_seat);
 		wl_keyboard_add_listener(seat->keyboard, &keyboard_listener, seat);
-	}
-	if ((caps & WL_SEAT_CAPABILITY_TOUCH)) {
-		seat->touch = wl_seat_get_touch(wl_seat);
-		wl_touch_add_listener(seat->touch, &touch_listener, seat->state);
 	}
 }
 
