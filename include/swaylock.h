@@ -128,6 +128,8 @@ struct swaylock_surface {
 	struct wl_output *output;
 	uint32_t output_global_name;
 	struct zxdg_output_v1 *xdg_output;
+	struct wl_surface *indicator_child; // surface made into subsurface
+	struct wl_subsurface *indicator_subsurface;
 	struct wl_surface *surface;
 	struct wl_surface *child; // surface made into subsurface
 	struct wl_subsurface *subsurface;
