@@ -186,36 +186,108 @@ static const struct wl_pointer_listener pointer_listener = {
 	.axis_discrete = wl_pointer_axis_discrete,
 };
 
-static void wl_touch_down(void *data, struct wl_touch *touch, uint32_t serial,
-		uint32_t time, struct wl_surface *surface, int32_t id, wl_fixed_t x, wl_fixed_t y) {
-	swaylock_handle_touch((struct swaylock_state *)data);
+void wl_touch_down(void *data, struct wl_touch *wl_touch, uint32_t serial,
+		uint32_t time, struct wl_surface *surface, int32_t id,
+		wl_fixed_t x, wl_fixed_t y) {
+	uint32_t touch_x, touch_y;
+	struct swaylock_seat *seat = data;
+	struct swaylock_state *state = seat->state;
+
+	bool is_for_keypad_surface = false;
+	
+	//Find out to wich surface this belongs
+	struct swaylock_surface *this_surface;
+	wl_list_for_each(this_surface, &state->surfaces, link) {
+		if (this_surface->keypad_child == surface) {
+			is_for_keypad_surface = true;
+			break;
+		} else if (this_surface->child == surface ||
+				this_surface->surface == surface) {
+			break;		
+		}
+	}
+	
+	touch_x = wl_fixed_to_int(x) * this_surface->scale;
+	touch_y = wl_fixed_to_int(y) * this_surface->scale;
+	
+	if (is_for_keypad_surface) {
+		int key_x = touch_x / (this_surface->keypad_width / 3);
+		int key_y = touch_y / (this_surface->keypad_height / 5);
+		
+		switch (key_y) {
+			case 0: /* fallthrough */
+			case 1:
+			case 2:
+				if (key_x >= 0 && key_x< 3) {
+					swaylock_handle_key(state, 0, '1' + key_x + key_y * 3);
+				}
+				break;
+			case 3:
+				switch (key_x) {
+					case 0:
+						break;
+					case 1:
+						swaylock_handle_key(state, 0, '0');
+						break;
+					case 2:
+						swaylock_handle_key(state, XKB_KEY_Delete, 0);
+						break;
+					default:
+						break;
+				}
+				break;
+			case 4:
+				swaylock_handle_key(state, XKB_KEY_Return, '\n');
+				break;
+			default:
+				break;
+		}
+	}
 }
 
-static void wl_touch_up(void *data, struct wl_touch *touch, uint32_t serial,
+void wl_touch_up(void *data, struct wl_touch *wl_touch, uint32_t serial,
 		uint32_t time, int32_t id) {
-	// Who cares
+	/*kbd_release_key(&keyboard, time);*/
 }
 
-static void wl_touch_motion(void *data, struct wl_touch *touch, uint32_t time,
+void wl_touch_motion(void *data, struct wl_touch *wl_touch, uint32_t time,
 		int32_t id, wl_fixed_t x, wl_fixed_t y) {
-	swaylock_handle_touch((struct swaylock_state *)data);
+	/*uint32_t touch_x, touch_y;
+
+	touch_x = wl_fixed_to_int(x);
+	touch_y = wl_fixed_to_int(y);
+
+	kbd_motion_key(&keyboard, time, touch_x, touch_y);*/
 }
 
-static void wl_touch_frame(void *data, struct wl_touch *touch) {
+void wl_touch_frame(void *data, struct wl_touch *wl_touch) {
 	// Who cares
 }
 
-static void wl_touch_cancel(void *data, struct wl_touch *touch) {
+void wl_touch_cancel(void *data, struct wl_touch *wl_touch) {
+	// Who cares
+}
+
+void wl_touch_shape(void *data, struct wl_touch *wl_touch, int32_t id,
+		wl_fixed_t major, wl_fixed_t minor) {
+	// Who cares
+}
+
+void wl_touch_orientation(void *data, struct wl_touch *wl_touch, int32_t id,
+		wl_fixed_t orientation) {
 	// Who cares
 }
 
 static const struct wl_touch_listener touch_listener = {
-	.down = wl_touch_down,
-	.up = wl_touch_up,
-	.motion = wl_touch_motion,
-	.frame = wl_touch_frame,
-	.cancel = wl_touch_cancel,
+  .down = wl_touch_down,
+  .up = wl_touch_up,
+  .motion = wl_touch_motion,
+  .frame = wl_touch_frame,
+  .cancel = wl_touch_cancel,
+  .shape = wl_touch_shape,
+  .orientation = wl_touch_orientation,
 };
+
 
 static void seat_handle_capabilities(void *data, struct wl_seat *wl_seat,
 		enum wl_seat_capability caps) {
@@ -224,6 +296,10 @@ static void seat_handle_capabilities(void *data, struct wl_seat *wl_seat,
 		wl_pointer_release(seat->pointer);
 		seat->pointer = NULL;
 	}
+	if (seat->touch) {
+		wl_touch_release(seat->touch);
+		seat->touch = NULL;
+	}
 	if (seat->keyboard) {
 		wl_keyboard_release(seat->keyboard);
 		seat->keyboard = NULL;
@@ -231,6 +307,10 @@ static void seat_handle_capabilities(void *data, struct wl_seat *wl_seat,
 	if ((caps & WL_SEAT_CAPABILITY_POINTER)) {
 		seat->pointer = wl_seat_get_pointer(wl_seat);
 		wl_pointer_add_listener(seat->pointer, &pointer_listener, seat->state);
+	}
+	if ((caps & WL_SEAT_CAPABILITY_TOUCH)) {
+		seat->touch = wl_seat_get_touch(wl_seat);
+		wl_touch_add_listener(seat->touch, &touch_listener, seat);
 	}
 	if ((caps & WL_SEAT_CAPABILITY_KEYBOARD)) {
 		seat->keyboard = wl_seat_get_keyboard(wl_seat);

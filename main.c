@@ -1,3 +1,4 @@
+#include <wayland-client-protocol.h>
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
 #include <ctype.h>
@@ -257,6 +258,8 @@ static void destroy_surface(struct swaylock_surface *surface) {
 	destroy_buffer(&surface->buffers[1]);
 	destroy_buffer(&surface->indicator_buffers[0]);
 	destroy_buffer(&surface->indicator_buffers[1]);
+	destroy_buffer(&surface->keypad_buffers[0]);
+	destroy_buffer(&surface->keypad_buffers[1]);
 	wl_output_destroy(surface->output);
 	free(surface);
 }
@@ -296,6 +299,12 @@ static void create_surface(struct swaylock_surface *surface) {
 	surface->subsurface = wl_subcompositor_get_subsurface(state->subcompositor, surface->child, surface->surface);
 	assert(surface->subsurface);
 	wl_subsurface_set_sync(surface->subsurface);
+
+	surface->keypad_child = wl_compositor_create_surface(state->compositor);
+	assert(surface->keypad_child);
+	surface->keypad_subsurface = wl_subcompositor_get_subsurface(state->subcompositor, surface->keypad_child, surface->surface);
+	assert(surface->keypad_subsurface);
+	wl_subsurface_set_sync(surface->keypad_subsurface);
 
 	if (state->ext_session_lock_v1) {
 		surface->ext_session_lock_surface_v1 = ext_session_lock_v1_get_lock_surface(
@@ -340,7 +349,8 @@ static void initially_render_surface(struct swaylock_surface *surface) {
 
 	if (!surface->state->ext_session_lock_v1) {
 		render_frame_background(surface, true);
-		render_frame(surface);
+		render_indicator_frame(surface);
+		render_keypad_frame(surface);
 	}
 }
 
@@ -353,6 +363,8 @@ static void layer_surface_configure(void *data,
 	surface->height = height;
 	surface->indicator_width = 0;
 	surface->indicator_height = 0;
+	surface->keypad_width = 0;
+	surface->keypad_height = 0;
 	zwlr_layer_surface_v1_ack_configure(layer_surface, serial);
 
 	if (!surface->configured && --surface->events_pending == 0) {
@@ -387,7 +399,8 @@ static void ext_session_lock_surface_v1_handle_configure(void *data,
 	render_frame_background(surface, false);
 	ext_session_lock_surface_v1_ack_configure(lock_surface, serial);
 	wl_surface_commit(surface->surface);
-	render_frame(surface);
+	render_indicator_frame(surface);
+	render_keypad_frame(surface);
 }
 
 static const struct ext_session_lock_surface_v1_listener ext_session_lock_surface_v1_listener = {
@@ -415,7 +428,8 @@ static void surface_frame_handle_done(void *data, struct wl_callback *callback,
 			surface->dirty = true;
 		}
 
-		render_frame(surface);
+		render_indicator_frame(surface);
+		render_keypad_frame(surface);
 	}
 }
 

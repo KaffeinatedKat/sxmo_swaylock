@@ -131,11 +131,14 @@ struct swaylock_surface {
 	struct wl_surface *surface;
 	struct wl_surface *child; // surface made into subsurface
 	struct wl_subsurface *subsurface;
+	struct wl_surface *keypad_child;
+	struct wl_subsurface *keypad_subsurface;
 	struct zwlr_layer_surface_v1 *layer_surface;
 	struct zwlr_screencopy_frame_v1 *screencopy_frame;
 	struct ext_session_lock_surface_v1 *ext_session_lock_surface_v1;
 	struct pool_buffer buffers[2];
 	struct pool_buffer indicator_buffers[2];
+	struct pool_buffer keypad_buffers[2];
 	struct pool_buffer *current_buffer;
 	struct swaylock_fade fade;
 	int events_pending;
@@ -143,6 +146,7 @@ struct swaylock_surface {
 	bool frame_pending, dirty;
 	uint32_t width, height;
 	uint32_t indicator_width, indicator_height;
+	uint32_t keypad_width, keypad_height;
 	int32_t scale;
 	enum wl_output_subpixel subpixel;
 	enum wl_output_transform transform;
@@ -164,7 +168,8 @@ void swaylock_handle_mouse(struct swaylock_state *state);
 void swaylock_handle_touch(struct swaylock_state *state);
 void render_frame_background(struct swaylock_surface *surface, bool commit);
 void render_background_fade(struct swaylock_surface *surface, uint32_t time);
-void render_frame(struct swaylock_surface *surface);
+void render_indicator_frame(struct swaylock_surface *surface);
+void render_keypad_frame(struct swaylock_surface *surface);
 void render_frames(struct swaylock_state *state);
 void damage_surface(struct swaylock_surface *surface);
 void damage_state(struct swaylock_state *state);

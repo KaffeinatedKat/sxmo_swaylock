@@ -63,6 +63,23 @@ static void timetext(struct swaylock_surface *surface, char **tstr, char **dstr)
 	setlocale(LC_TIME, prevloc);
 }
 
+void draw_boxed_text(cairo_t *cairo, struct swaylock_state *state,
+		char *text, int pos_x, int pos_y, int width, int height,
+		struct swaylock_colorset *colorset_text,
+		struct swaylock_colorset *colorset_background) {
+	set_color_for_state(cairo, state, colorset_background);
+	cairo_rectangle(cairo, pos_x, pos_y, width, height);
+	cairo_fill(cairo);
+	//Draw text
+	cairo_text_extents_t extents;
+	cairo_font_extents_t fe;
+	set_color_for_state(cairo, state, colorset_text);
+	cairo_text_extents(cairo, text, &extents);
+	cairo_font_extents(cairo, &fe);
+	cairo_move_to(cairo, pos_x + (width - extents.width) / 2, pos_y + height / 2 + fe.ascent / 2);
+	cairo_show_text(cairo, text);
+}
+
 void render_frame_background(struct swaylock_surface *surface, bool commit) {
 	struct swaylock_state *state = surface->state;
 
@@ -116,10 +133,11 @@ void render_background_fade(struct swaylock_surface *surface, uint32_t time) {
 	fade_update(&surface->fade, time);
 
 	render_frame_background(surface, true);
-	render_frame(surface);
+	render_indicator_frame(surface);
+	render_keypad_frame(surface);
 }
 
-void render_frame(struct swaylock_surface *surface) {
+void render_indicator_frame(struct swaylock_surface *surface) {
 	struct swaylock_state *state = surface->state;
 
 	int arc_radius = state->args.radius * surface->scale;
@@ -439,7 +457,7 @@ void render_frame(struct swaylock_surface *surface) {
 		destroy_buffer(surface->current_buffer);
 		surface->indicator_width = new_width;
 		surface->indicator_height = new_height;
-		render_frame(surface);
+		render_indicator_frame(surface);
 		return;
 	}
 
@@ -451,9 +469,121 @@ void render_frame(struct swaylock_surface *surface) {
 	wl_surface_commit(surface->surface);
 }
 
-void render_frames(struct swaylock_state *state) {
-	struct swaylock_surface *surface;
-	wl_list_for_each(surface, &state->surfaces, link) {
-		render_frame(surface);
+void render_keypad_frame(struct swaylock_surface *surface) {
+	struct swaylock_state *state = surface->state;
+
+	int buffer_width = surface->keypad_width;
+	int buffer_height = surface->keypad_height;
+	
+	int subsurf_xpos = surface->width - buffer_width;
+	int subsurf_ypos = surface->height - buffer_height;
+	
+	int horizontal_padding = 8.0 * surface->scale;
+	int vertical_padding = 4.0 * surface->scale;
+	
+	int spacing = 4.0 * surface->scale;
+	
+	int new_width = buffer_width;
+	int new_height = buffer_height;
+	
+	wl_subsurface_set_position(surface->keypad_subsurface, subsurf_xpos, subsurf_ypos);
+	
+	surface->current_buffer = get_next_buffer(state->shm,
+			surface->keypad_buffers, buffer_width, buffer_height);
+	if (surface->current_buffer == NULL) {
+		return;
 	}
+	
+	// Hide subsurface until we want it visible
+	wl_surface_attach(surface->keypad_child, NULL, 0, 0);
+	wl_surface_commit(surface->keypad_child);
+	
+	cairo_t *cairo = surface->current_buffer->cairo;
+	cairo_set_antialias(cairo, CAIRO_ANTIALIAS_BEST);
+	cairo_font_options_t *fo = cairo_font_options_create();
+	cairo_font_options_set_hint_style(fo, CAIRO_HINT_STYLE_FULL);
+	cairo_font_options_set_antialias(fo, CAIRO_ANTIALIAS_SUBPIXEL);
+	cairo_font_options_set_subpixel_order(fo, to_cairo_subpixel_order(surface->subpixel));
+	cairo_set_font_options(cairo, fo);
+	cairo_font_options_destroy(fo);
+	cairo_identity_matrix(cairo);
+	
+	// Clear
+	cairo_save(cairo);
+	cairo_set_source_rgba(cairo, 0, 0, 0, 0);
+	cairo_set_operator(cairo, CAIRO_OPERATOR_SOURCE);
+	cairo_paint(cairo);
+	cairo_restore(cairo);
+	
+	cairo_select_font_face(cairo, state->args.font,
+			CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+	if (state->args.font_size > 0) {
+		cairo_set_font_size(cairo, state->args.font_size);
+	} else {
+		cairo_set_font_size(cairo, surface->scale * 16);
+	}
+	
+	cairo_text_extents_t extents;
+	cairo_font_extents_t fe;
+	cairo_text_extents(cairo, "000", &extents);
+	cairo_font_extents(cairo, &fe);
+	
+	int keypad_min_width = extents.width * 3 + horizontal_padding * 6 + spacing * 4;
+	if (buffer_width < keypad_min_width) {
+		new_width = keypad_min_width;
+	}
+	
+	int keypad_min_height = fe.height * 5 + vertical_padding * 10 + spacing * 6;
+	if (buffer_height < keypad_min_height) {
+		new_height = keypad_min_height;
+	}
+	
+	int key_width = (buffer_width - spacing * 4) / 3;
+	int key_height = (buffer_height - spacing * 6) / 5;
+	
+	char label[2];
+	
+	label[1] = '\0';
+	
+	for (int y = 0; y < 4; y++) {
+		for (int x = 0; x < 3; x++) {
+			int pos_x = spacing * (x+1) + key_width * x;
+			int pos_y = spacing * (y+1) + key_height * y;
+			//Draw key label
+			label[0] = '1' + y * 3 + x;
+			if (label[0] == ';') {
+				label[0] = '0';
+			} else if (label[0] == ':') {
+				label[0] = ' ';
+			}
+			draw_boxed_text(cairo, state, label, pos_x, pos_y, key_width, key_height,
+				&state->args.colors.text, &state->args.colors.inside);
+		}
+	}
+	
+	int pos_x = spacing;
+	int pos_y = spacing * 5 + key_height * 4;
+	draw_boxed_text(cairo, state, "Unlock", pos_x, pos_y, key_width*3+spacing*2, key_height,
+				&state->args.colors.text, &state->args.colors.inside);
+	
+	// Ensure buffer size is multiple of buffer scale - required by protocol
+	if (new_height % surface->scale) new_height += surface->scale - (new_height % surface->scale);
+	if (new_width % surface->scale) new_width += surface->scale - (new_width % surface->scale);
+
+	if (buffer_width != new_width || buffer_height != new_height) {
+		destroy_buffer(surface->current_buffer);
+		surface->keypad_width = new_width;
+		surface->keypad_height = new_height;
+		wl_surface_damage_buffer(surface->surface, subsurf_xpos, subsurf_ypos, buffer_width, buffer_height);
+		render_keypad_frame(surface);
+		render_indicator_frame(surface);
+		return;
+	}
+	
+	wl_surface_set_buffer_scale(surface->keypad_child, surface->scale);
+	wl_surface_attach(surface->keypad_child, surface->current_buffer->buffer, 0, 0);
+	wl_surface_damage_buffer(surface->keypad_child, 0, 0, INT32_MAX, INT32_MAX);
+	wl_surface_commit(surface->keypad_child);
+	
+	wl_surface_commit(surface->surface);
 }

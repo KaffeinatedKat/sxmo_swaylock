@@ -175,6 +175,7 @@ void swaylock_handle_key(struct swaylock_state *state,
 			break;
 		}
 		// fallthrough
+	case 0:
 	default:
 		if (codepoint) {
 			append_ch(&state->password, codepoint);
