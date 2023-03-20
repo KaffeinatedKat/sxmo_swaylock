@@ -475,15 +475,18 @@ void render_keypad_frame(struct swaylock_surface *surface) {
 	int buffer_width = surface->keypad_width;
 	int buffer_height = surface->keypad_height;
 	
-	int subsurf_xpos = surface->width - buffer_width;
-	int subsurf_ypos = surface->height - buffer_height;
+	int subsurf_xpos = state->args.margin;
+	int subsurf_ypos = surface->height - (buffer_height / surface->scale); 
 	
 	int horizontal_padding = 8.0 * surface->scale;
 	int vertical_padding = 4.0 * surface->scale;
 	
 	int spacing = 4.0 * surface->scale;
+	int margin = state->args.margin * surface->scale;
 	
-	int new_width = buffer_width;
+	subsurf_ypos -= margin;
+	
+	int new_width = surface->width * surface->scale; //buffer_width;
 	int new_height = buffer_height;
 	
 	wl_subsurface_set_position(surface->keypad_subsurface, subsurf_xpos, subsurf_ypos);
@@ -566,6 +569,15 @@ void render_keypad_frame(struct swaylock_surface *surface) {
 	draw_boxed_text(cairo, state, "Unlock", pos_x, pos_y, key_width*3+spacing*2, key_height,
 				&state->args.colors.text, &state->args.colors.inside);
 	
+	// Make sure the keypad fits on the screen
+	if ((uint32_t)(new_width + margin*2) > (surface->width * surface->scale)) {
+		new_width = surface->width * surface->scale - margin*2;
+	}
+	
+	if ((uint32_t)(new_height + margin*2) > (surface->height * surface->scale)) {
+		new_height = surface->height * surface->scale - margin*2;
+	}
+
 	// Ensure buffer size is multiple of buffer scale - required by protocol
 	if (new_height % surface->scale) new_height += surface->scale - (new_height % surface->scale);
 	if (new_width % surface->scale) new_width += surface->scale - (new_width % surface->scale);
@@ -582,7 +594,7 @@ void render_keypad_frame(struct swaylock_surface *surface) {
 	
 	wl_surface_set_buffer_scale(surface->keypad_child, surface->scale);
 	wl_surface_attach(surface->keypad_child, surface->current_buffer->buffer, 0, 0);
-	wl_surface_damage_buffer(surface->keypad_child, 0, 0, INT32_MAX, INT32_MAX);
+	wl_surface_damage_buffer(surface->surface, subsurf_xpos, subsurf_ypos, buffer_width * surface->scale, buffer_height * surface->scale);
 	wl_surface_commit(surface->keypad_child);
 	
 	wl_surface_commit(surface->surface);

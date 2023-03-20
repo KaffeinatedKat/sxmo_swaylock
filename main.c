@@ -959,6 +959,7 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 		enum line_mode *line_mode, char **config_path) {
 	enum long_option_codes {
 		LO_TRACE,
+		LO_MARGIN, 
 		LO_BS_HL_COLOR = 256,
 		LO_CAPS_LOCK_BS_HL_COLOR,
 		LO_CAPS_LOCK_KEY_HL_COLOR,
@@ -1058,6 +1059,7 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 		{"line-caps-lock-color", required_argument, NULL, LO_LINE_CAPS_LOCK_COLOR},
 		{"line-ver-color", required_argument, NULL, LO_LINE_VER_COLOR},
 		{"line-wrong-color", required_argument, NULL, LO_LINE_WRONG_COLOR},
+		{"margin", required_argument, NULL, LO_MARGIN}, 
 		{"ring-color", required_argument, NULL, LO_RING_COLOR},
 		{"ring-clear-color", required_argument, NULL, LO_RING_CLEAR_COLOR},
 		{"ring-caps-lock-color", required_argument, NULL, LO_RING_CAPS_LOCK_COLOR},
@@ -1476,6 +1478,11 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 				state->args.colors.ring.input = parse_color(optarg);
 			}
 			break;
+		case LO_MARGIN:
+			if (state) {
+				state->args.margin = strtol(optarg, NULL, 0);
+			}
+			break;
 		case LO_RING_CLEAR_COLOR:
 			if (state) {
 				state->args.colors.ring.cleared = parse_color(optarg);
@@ -1786,6 +1793,7 @@ int main(int argc, char **argv) {
 		.mode = BACKGROUND_MODE_FILL,
 		.font = strdup("sans-serif"),
 		.font_size = 0,
+		.margin = 20,
 		.radius = 75,
 		.thickness = 10,
 		.indicator_x_position = 0,

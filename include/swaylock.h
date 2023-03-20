@@ -50,6 +50,7 @@ struct swaylock_args {
 	struct swaylock_colors colors;
 	enum background_mode mode;
 	char *font;
+	uint32_t margin; 
 	uint32_t font_size;
 	uint32_t radius;
 	uint32_t thickness;
