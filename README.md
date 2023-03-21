@@ -9,6 +9,7 @@ does not have a proper password protected lockscreen
 
 - Everything from [swaylock-effects](https://github.com/jirutka/swaylock-effects) (I have not tested that everything works)
 - On screen 10 digit keypad for touchscreens 
+- Basic swipe gestures to toggle the keypad (via --swipe-gestures)
 
 Current implementation is not polished, but in it's current form suffices as a lockscreen and is 
 better than what sxmo has by default.
@@ -17,7 +18,6 @@ better than what sxmo has by default.
 
 ## Planned Feautres
 
-- Swipe guestures (ex. open and close the keypad)
 - Some kind of notification viewer with support for sxmo notifications
 - Custom indicator 
 - Maybe a full keyboard instead of just the numbered keypad

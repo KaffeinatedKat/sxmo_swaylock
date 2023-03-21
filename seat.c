@@ -214,33 +214,36 @@ void wl_touch_down(void *data, struct wl_touch *wl_touch, uint32_t serial,
 		int key_x = touch_x / (this_surface->keypad_width / 3);
 		int key_y = touch_y / (this_surface->keypad_height / 5);
 		
-		switch (key_y) {
-			case 0: /* fallthrough */
-			case 1:
-			case 2:
-				if (key_x >= 0 && key_x< 3) {
-					swaylock_handle_key(state, 0, '1' + key_x + key_y * 3);
-				}
-				break;
-			case 3:
-				switch (key_x) {
-					case 0:
-						break;
-					case 1:
-						swaylock_handle_key(state, 0, '0');
-						break;
-					case 2:
-						swaylock_handle_key(state, XKB_KEY_Delete, 0);
-						break;
-					default:
-						break;
-				}
-				break;
-			case 4:
-				swaylock_handle_key(state, XKB_KEY_Return, '\n');
-				break;
-			default:
-				break;
+		if (seat->state->args.show_keypad) {
+			switch (key_y) {
+				case 0: /* fallthrough */
+				case 1:
+				case 2:
+					if (key_x >= 0 && key_x< 3) {
+						swaylock_handle_key(state, 0, '1' + key_x + key_y * 3);
+					}
+					break;
+				case 3:
+					switch (key_x) {
+						case 0:
+							swaylock_handle_key(state, XKB_KEY_Escape, 0);
+							break;
+						case 1:
+							swaylock_handle_key(state, 0, '0');
+							break;
+						case 2:
+							swaylock_handle_key(state, XKB_KEY_Delete, 0);
+							break;
+						default:
+							break;
+					}
+					break;
+				case 4:
+					swaylock_handle_key(state, XKB_KEY_Return, '\n');
+					break;
+				default:
+					break;
+			}
 		}
 	}
 }
@@ -252,12 +255,35 @@ void wl_touch_up(void *data, struct wl_touch *wl_touch, uint32_t serial,
 
 void wl_touch_motion(void *data, struct wl_touch *wl_touch, uint32_t time,
 		int32_t id, wl_fixed_t x, wl_fixed_t y) {
-	/*uint32_t touch_x, touch_y;
 
+	struct swaylock_seat *seat = data;
+	struct swaylock_state *state = seat->state;
+	uint32_t touch_x, touch_y;
+
+	// Exit if swipe gestures disabled
+	if (state->args.swipe_gestures == false) {
+		return;
+	}
+	
 	touch_x = wl_fixed_to_int(x);
 	touch_y = wl_fixed_to_int(y);
 
-	kbd_motion_key(&keyboard, time, touch_x, touch_y);*/
+	if (state->swipe_count < 10) {
+		state->swipe_x[state->swipe_count] = touch_x;
+		state->swipe_y[state->swipe_count] = touch_y;
+		state->swipe_count++;
+	} else {
+		// Swipe up
+		if (state->swipe_y[0] > state->swipe_y[state->swipe_count - 1]) {
+			state->args.show_keypad = true;
+
+		// Swipe down
+		} else if (state->swipe_y[0] < state->swipe_y[state->swipe_count - 1]) {
+			state->args.show_keypad = false;
+		}
+
+		state->swipe_count = 0;
+	}
 }
 
 void wl_touch_frame(void *data, struct wl_touch *wl_touch) {

@@ -58,8 +58,10 @@ struct swaylock_args {
 	uint32_t indicator_y_position;
 	bool override_indicator_x_position;
 	bool override_indicator_y_position;
+	bool swipe_gestures;
 	bool ignore_empty;
 	bool show_indicator;
+	bool show_keypad;
 	bool show_caps_lock_text;
 	bool show_caps_lock_indicator;
 	bool show_keyboard_layout;
@@ -106,6 +108,7 @@ struct swaylock_state {
 	struct swaylock_password password;
 	struct swaylock_xkb xkb;
 	enum auth_state auth_state;
+	int swipe_x[50], swipe_y[50], swipe_count;
 	bool indicator_dirty;
 	int render_randnum;
 	int failed_attempts;

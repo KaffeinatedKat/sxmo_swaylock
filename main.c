@@ -960,6 +960,7 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 	enum long_option_codes {
 		LO_TRACE,
 		LO_MARGIN, 
+		LO_SWIPE_GESTURES,
 		LO_BS_HL_COLOR = 256,
 		LO_CAPS_LOCK_BS_HL_COLOR,
 		LO_CAPS_LOCK_KEY_HL_COLOR,
@@ -1023,6 +1024,7 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 		{"daemonize", no_argument, NULL, 'f'},
 		{"help", no_argument, NULL, 'h'},
 		{"image", required_argument, NULL, 'i'},
+		{"swipe-gestures", no_argument, NULL, LO_SWIPE_GESTURES},
 		{"screenshots", no_argument, NULL, 'S'},
 		{"disable-caps-lock-text", no_argument, NULL, 'L'},
 		{"indicator-caps-lock", no_argument, NULL, 'l'},
@@ -1138,6 +1140,8 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 			"Same as --scaling=tile.\n"
 		"  -u, --no-unlock-indicator        "
 			"Disable the unlock indicator.\n"
+		"  --swipe-gestures                 "
+			"Swipe up and down to reveal/hide keypad.\n"
 		"  --indicator                      "
 			"Always show the indicator.\n"
 		"  --clock                          "
@@ -1349,6 +1353,12 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 		case 'v':
 			fprintf(stdout, "swaylock version " SWAYLOCK_VERSION "\n");
 			exit(EXIT_SUCCESS);
+			break;
+		case LO_SWIPE_GESTURES:
+			if (state) {
+				state->args.swipe_gestures = true;
+				state->args.show_keypad = false;
+			}
 			break;
 		case LO_BS_HL_COLOR:
 			if (state) {
@@ -1789,7 +1799,10 @@ int main(int argc, char **argv) {
 	enum line_mode line_mode = LM_LINE;
 	state.failed_attempts = 0;
 	state.indicator_dirty = false;
+	state.swipe_count = 0;
 	state.args = (struct swaylock_args){
+		.show_keypad = true,
+		.swipe_gestures = false,
 		.mode = BACKGROUND_MODE_FILL,
 		.font = strdup("sans-serif"),
 		.font_size = 0,

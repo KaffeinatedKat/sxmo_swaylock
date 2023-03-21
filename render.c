@@ -472,6 +472,18 @@ void render_indicator_frame(struct swaylock_surface *surface) {
 void render_keypad_frame(struct swaylock_surface *surface) {
 	struct swaylock_state *state = surface->state;
 
+	int ind_radius = state->args.radius * surface->scale;
+	int ind_thickness = state->args.thickness * surface->scale;
+	int margin = state->args.margin * surface->scale;
+
+	if ((uint32_t)(ind_radius*2 + margin*2 + ind_thickness*2) > surface->width) {
+		ind_radius = surface->width/2 - margin - ind_thickness;
+	}
+	
+	if ((uint32_t)(ind_radius*2 + margin*2 + ind_thickness*2) > surface->height) {
+		ind_radius = surface->height/2 - margin - ind_thickness;
+	}
+
 	int buffer_width = surface->keypad_width;
 	int buffer_height = surface->keypad_height;
 	
@@ -482,7 +494,6 @@ void render_keypad_frame(struct swaylock_surface *surface) {
 	int vertical_padding = 4.0 * surface->scale;
 	
 	int spacing = 4.0 * surface->scale;
-	int margin = state->args.margin * surface->scale;
 	
 	subsurf_ypos -= margin;
 	
@@ -543,31 +554,35 @@ void render_keypad_frame(struct swaylock_surface *surface) {
 	
 	int key_width = (buffer_width - spacing * 4) / 3;
 	int key_height = (buffer_height - spacing * 6) / 5;
-	
-	char label[2];
-	
-	label[1] = '\0';
-	
-	for (int y = 0; y < 4; y++) {
-		for (int x = 0; x < 3; x++) {
-			int pos_x = spacing * (x+1) + key_width * x;
-			int pos_y = spacing * (y+1) + key_height * y;
-			//Draw key label
-			label[0] = '1' + y * 3 + x;
-			if (label[0] == ';') {
-				label[0] = '0';
-			} else if (label[0] == ':') {
-				label[0] = ' ';
-			}
-			draw_boxed_text(cairo, state, label, pos_x, pos_y, key_width, key_height,
-				&state->args.colors.text, &state->args.colors.inside);
-		}
-	}
-	
+
 	int pos_x = spacing;
 	int pos_y = spacing * 5 + key_height * 4;
-	draw_boxed_text(cairo, state, "Unlock", pos_x, pos_y, key_width*3+spacing*2, key_height,
-				&state->args.colors.text, &state->args.colors.inside);
+
+	if (state->args.show_keypad) {
+		char label[2];
+		
+		label[1] = '\0';
+		
+		for (int y = 0; y < 4; y++) {
+			for (int x = 0; x < 3; x++) {
+				int pos_x = spacing * (x+1) + key_width * x;
+				int pos_y = spacing * (y+1) + key_height * y;
+				//Draw key label
+				label[0] = '1' + y * 3 + x;
+				if (label[0] == ';') {
+					label[0] = '0';
+				} else if (label[0] == ':') {
+					label[0] = 'X';
+				}
+				draw_boxed_text(cairo, state, label, pos_x, pos_y, key_width, key_height,
+					&state->args.colors.text, &state->args.colors.inside);
+			}
+		}
+	
+		draw_boxed_text(cairo, state, "Unlock", pos_x, pos_y, key_width*3+spacing*2, key_height,
+					&state->args.colors.text, &state->args.colors.inside);
+
+	}
 	
 	// Make sure the keypad fits on the screen
 	if ((uint32_t)(new_width + margin*2) > (surface->width * surface->scale)) {
