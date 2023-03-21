@@ -1788,7 +1788,7 @@ static void comm_in(int fd, short mask, void *data) {
 static void timer_render(void *data) {
 	struct swaylock_state *state = (struct swaylock_state *)data;
 	damage_state(state);
-	loop_add_timer(state->eventloop, 1000, timer_render, state);
+	loop_add_timer(state->eventloop, 100, timer_render, state);
 }
 
 int main(int argc, char **argv) {
@@ -1982,7 +1982,7 @@ int main(int argc, char **argv) {
 
 	loop_add_fd(state.eventloop, get_comm_reply_fd(), POLLIN, comm_in, NULL);
 
-	loop_add_timer(state.eventloop, 1000, timer_render, &state);
+	loop_add_timer(state.eventloop, 50, timer_render, &state);
 
 	if (state.args.fade_in) {
 		loop_add_timer(state.eventloop, state.args.fade_in, end_allow_fade_period, &state);
