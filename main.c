@@ -921,10 +921,10 @@ static void set_default_colors(struct swaylock_colors *colors) {
 	colors->layout_text = 0xFFFFFFFF;
 	colors->inside = (struct swaylock_colorset){
 		.input = 0x000000C0,
-		.cleared = 0xE5A445C0,
+		.cleared = 0x000000C0, 
 		.caps_lock = 0x000000C0,
-		.verifying = 0x0072FFC0,
-		.wrong = 0xFA0000C0,
+		.verifying = 0x000000C0,
+		.wrong = 0x000000C0,
 	};
 	colors->line = (struct swaylock_colorset){
 		.input = 0x000000FF,
@@ -942,10 +942,10 @@ static void set_default_colors(struct swaylock_colors *colors) {
 	};
 	colors->text = (struct swaylock_colorset){
 		.input = 0xE5A445FF,
-		.cleared = 0x000000FF,
+		.cleared = 0xE5A445FF,
 		.caps_lock = 0xE5A445FF,
-		.verifying = 0x000000FF,
-		.wrong = 0x000000FF,
+		.verifying = 0xE5A445FF,
+		.wrong = 0xE5A445FF,
 	};
 }
 
