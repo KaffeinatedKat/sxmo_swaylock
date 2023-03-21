@@ -64,9 +64,10 @@ static void timetext(struct swaylock_surface *surface, char **tstr, char **dstr)
 }
 
 void draw_boxed_text(cairo_t *cairo, struct swaylock_state *state,
-		char *text, int pos_x, int pos_y, int width, int height,
-		struct swaylock_colorset *colorset_text,
+		enum box_type type, char *text, int pos_x, int pos_y, int width, 
+		int height, struct swaylock_colorset *colorset_text,
 		struct swaylock_colorset *colorset_background) {
+
 	set_color_for_state(cairo, state, colorset_background);
 	cairo_rectangle(cairo, pos_x, pos_y, width, height);
 	cairo_fill(cairo);
@@ -76,7 +77,8 @@ void draw_boxed_text(cairo_t *cairo, struct swaylock_state *state,
 	set_color_for_state(cairo, state, colorset_text);
 	cairo_text_extents(cairo, text, &extents);
 	cairo_font_extents(cairo, &fe);
-	cairo_move_to(cairo, pos_x + (width - extents.width) / 2, pos_y + height / 2 + fe.ascent / 2);
+	if (type == TYPE_RENDER_KEY) cairo_move_to(cairo, pos_x + (width - extents.width) / 2, pos_y + height / 2 + fe.ascent / 2);
+	else if (type == TYPE_RENDER_NOTIFICATION) cairo_move_to(cairo, pos_x + 10, pos_y + fe.height);
 	cairo_show_text(cairo, text);
 }
 
@@ -469,6 +471,33 @@ void render_indicator_frame(struct swaylock_surface *surface) {
 	wl_surface_commit(surface->surface);
 }
 
+void render_notifications(cairo_t *cairo, struct swaylock_state *state, int spacing,
+		int key_height, int key_width, int pos_x, int pos_y) {
+
+	size_t notif_amt = 5;
+	char notifs[5][90];
+	strcpy(notifs[0], "Dad: take out the trash");
+	strcpy(notifs[1], "CECFC: come to our event that nobody cares about");
+	strcpy(notifs[2], "Email: attend our college you know nothing about and wont go to");
+	strcpy(notifs[3], "Email: attend our college you know nothing about and wont go to");
+	strcpy(notifs[4], "Email: attend our college you know nothing about and wont go to");
+
+	for (uint32_t x = 0; x < state->args.notification_count + 1; x++) {
+		int y = pos_y - ((spacing + key_height) * x);
+		if (x == state->args.notification_count) {
+			char more_notifs[50];
+
+			sprintf(more_notifs, "+%ld more . . .", notif_amt - x);
+			draw_boxed_text(cairo, state, TYPE_RENDER_NOTIFICATION, more_notifs, pos_x, y,
+					key_width*3+spacing*2, key_height, &state->args.colors.text, &state->args.colors.inside);
+		} else {
+			printf("%i\n", y);
+			draw_boxed_text(cairo, state, TYPE_RENDER_NOTIFICATION, notifs[x], pos_x, y, key_width*3+spacing*2,
+				key_height, &state->args.colors.text, &state->args.colors.inside);
+		}
+	}
+}
+
 void render_keypad_frame(struct swaylock_surface *surface) {
 	struct swaylock_state *state = surface->state;
 
@@ -574,14 +603,16 @@ void render_keypad_frame(struct swaylock_surface *surface) {
 				} else if (label[0] == ':') {
 					label[0] = 'X';
 				}
-				draw_boxed_text(cairo, state, label, pos_x, pos_y, key_width, key_height,
+				draw_boxed_text(cairo, state, TYPE_RENDER_KEY, label, pos_x, pos_y, key_width, key_height,
 					&state->args.colors.text, &state->args.colors.inside);
 			}
 		}
 	
-		draw_boxed_text(cairo, state, "Unlock", pos_x, pos_y, key_width*3+spacing*2, key_height,
+		draw_boxed_text(cairo, state, TYPE_RENDER_KEY, "Unlock", pos_x, pos_y, key_width*3+spacing*2, key_height,
 					&state->args.colors.text, &state->args.colors.inside);
 
+	} else if (state->args.notifications) {
+		render_notifications(cairo, state, spacing, key_height, key_width, pos_x, pos_y);
 	}
 	
 	// Make sure the keypad fits on the screen

@@ -22,6 +22,11 @@ enum auth_state {
 	AUTH_STATE_GRACE,
 };
 
+enum box_type {
+	TYPE_RENDER_KEY,
+	TYPE_RENDER_NOTIFICATION,
+};
+
 struct swaylock_colorset {
 	uint32_t input;
 	uint32_t cleared;
@@ -47,8 +52,7 @@ struct swaylock_colors {
 };
 
 struct swaylock_args {
-	struct swaylock_colors colors;
-	enum background_mode mode;
+	struct swaylock_colors colors; enum background_mode mode;
 	char *font;
 	uint32_t margin; 
 	uint32_t font_size;
@@ -56,6 +60,8 @@ struct swaylock_args {
 	uint32_t thickness;
 	uint32_t indicator_x_position;
 	uint32_t indicator_y_position;
+	uint32_t notification_count;
+	bool notifications;
 	bool override_indicator_x_position;
 	bool override_indicator_y_position;
 	bool swipe_gestures;
@@ -177,6 +183,8 @@ void render_background_fade(struct swaylock_surface *surface, uint32_t time);
 void render_indicator_frame(struct swaylock_surface *surface);
 void render_keypad_frame(struct swaylock_surface *surface);
 void render_frames(struct swaylock_state *state);
+void render_notifications(cairo_t *cario, struct swaylock_state *state, int spacing,
+		int key_height, int key_width, int pos_x, int pos_y);
 void damage_surface(struct swaylock_surface *surface);
 void damage_state(struct swaylock_state *state);
 void clear_password_buffer(struct swaylock_password *pw);

@@ -961,6 +961,8 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 		LO_TRACE,
 		LO_MARGIN, 
 		LO_SWIPE_GESTURES,
+		LO_NOTIFICATIONS,
+		LO_NOTIF_COUNT,
 		LO_BS_HL_COLOR = 256,
 		LO_CAPS_LOCK_BS_HL_COLOR,
 		LO_CAPS_LOCK_KEY_HL_COLOR,
@@ -1024,6 +1026,8 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 		{"daemonize", no_argument, NULL, 'f'},
 		{"help", no_argument, NULL, 'h'},
 		{"image", required_argument, NULL, 'i'},
+		{"notifications", no_argument, NULL, LO_NOTIFICATIONS},
+		{"notification-count", required_argument, NULL, LO_NOTIF_COUNT},
 		{"swipe-gestures", no_argument, NULL, LO_SWIPE_GESTURES},
 		{"screenshots", no_argument, NULL, 'S'},
 		{"disable-caps-lock-text", no_argument, NULL, 'L'},
@@ -1140,6 +1144,10 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 			"Same as --scaling=tile.\n"
 		"  -u, --no-unlock-indicator        "
 			"Disable the unlock indicator.\n"
+		"  --notifications                  "
+			"Display notifications when the keypad is down.\n"
+		"  --notification-count             "
+		    "Amount of notifications to display at once.\n"
 		"  --swipe-gestures                 "
 			"Swipe up and down to reveal/hide keypad.\n"
 		"  --indicator                      "
@@ -1353,6 +1361,16 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 		case 'v':
 			fprintf(stdout, "swaylock version " SWAYLOCK_VERSION "\n");
 			exit(EXIT_SUCCESS);
+			break;
+		case LO_NOTIF_COUNT:
+			if (state) {
+				state->args.notification_count = atoi(optarg);
+			}
+			break;
+		case LO_NOTIFICATIONS:
+			if (state) {
+				state->args.notifications = true;
+			}
 			break;
 		case LO_SWIPE_GESTURES:
 			if (state) {
@@ -1803,6 +1821,8 @@ int main(int argc, char **argv) {
 	state.args = (struct swaylock_args){
 		.show_keypad = true,
 		.swipe_gestures = false,
+		.notifications = false,
+		.notification_count = 4,
 		.mode = BACKGROUND_MODE_FILL,
 		.font = strdup("sans-serif"),
 		.font_size = 0,
