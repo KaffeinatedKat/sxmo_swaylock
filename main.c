@@ -947,6 +947,20 @@ static void set_default_colors(struct swaylock_colors *colors) {
 		.verifying = 0xE5A445FF,
 		.wrong = 0xE5A445FF,
 	};
+	colors->notif_text = (struct swaylock_colorset){
+		.input = 0xFFFFFFFF,
+		.cleared = 0xFFFFFFFF,
+		.caps_lock = 0xFFFFFFFF,
+		.verifying = 0xFFFFFFFF,
+		.wrong = 0xFFFFFFFF,
+	};
+	colors->notif_time_text = (struct swaylock_colorset){
+		.input = 0x474747FF,
+		.cleared = 0x474747FF,
+		.caps_lock = 0x474747FF,
+		.verifying = 0x474747FF,
+		.wrong = 0x474747FF,
+	};
 }
 
 enum line_mode {

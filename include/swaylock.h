@@ -49,6 +49,8 @@ struct swaylock_colors {
 	struct swaylock_colorset line;
 	struct swaylock_colorset ring;
 	struct swaylock_colorset text;
+	struct swaylock_colorset notif_text;
+	struct swaylock_colorset notif_time_text;
 };
 
 struct swaylock_args {
