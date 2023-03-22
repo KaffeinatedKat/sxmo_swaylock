@@ -16,9 +16,10 @@ better than what sxmo has by default.
 
 [How to intergrate swaylock into sxmo](https://slatecave.net/blog/integrating-my-screenlocker-with-sxmo-part-2/)
 
-## Planned Feautres
+## Planned Features
 
 - Some kind of notification viewer with support for sxmo notifications
+- More presise swipe gesture detection + more swipe gestures
 - Custom indicator 
 - Maybe a full keyboard instead of just the numbered keypad
 - More customization in regards to the keypad
