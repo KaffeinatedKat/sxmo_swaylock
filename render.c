@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
@@ -223,9 +224,6 @@ void render_indicator_frame(struct swaylock_surface *surface) {
 	cairo_paint(cairo);
 	cairo_restore(cairo);
 
-	float type_indicator_border_thickness =
-		TYPE_INDICATOR_BORDER_THICKNESS * surface->scale;
-
 	// This is a bit messy.
 	// After the fork, upstream added their own --indicator-idle-visible option,
 	// but it works slightly differently from swaylock-effects' --indicator
@@ -237,19 +235,17 @@ void render_indicator_frame(struct swaylock_surface *surface) {
 
 	if (state->args.indicator ||
 			(upstream_show_indicator && state->auth_state != AUTH_STATE_GRACE)) {
-		// Fill inner circle
+		// Fill background box
 		cairo_set_line_width(cairo, 0);
-		cairo_arc(cairo, buffer_width / 2, buffer_diameter / 2,
-				arc_radius - arc_thickness / 2, 0, 2 * M_PI);
+		cairo_rectangle(cairo, 0, 0, buffer_width, buffer_height);
 		set_color_for_state(cairo, state, &state->args.colors.inside);
 		cairo_fill_preserve(cairo);
 		cairo_stroke(cairo);
 
-		// Draw ring
-		cairo_set_line_width(cairo, arc_thickness);
-		cairo_arc(cairo, buffer_width / 2, buffer_diameter / 2, arc_radius,
-				0, 2 * M_PI);
+		// Draw indicator
+		cairo_rectangle(cairo, 0, 0, buffer_width, arc_thickness);
 		set_color_for_state(cairo, state, &state->args.colors.ring);
+		cairo_fill_preserve(cairo); 
 		cairo_stroke(cairo);
 
 		// Draw a message
@@ -389,15 +385,18 @@ void render_indicator_frame(struct swaylock_surface *surface) {
 				|| state->auth_state == AUTH_STATE_BACKSPACE) {
 
 			static double highlight_start = 0;
+			int highlight_width = (arc_radius*TYPE_INDICATOR_RANGE/M_PI);
+			float border_width = 2.0 * surface->scale;
+
 			if (state->indicator_dirty) {
-				highlight_start +=
-					(rand() % (int)(M_PI * 100)) / 100.0 + M_PI * 0.5;
+				highlight_start =
+					(rand() % (int)(buffer_width - highlight_width - border_width * 2));
 				state->indicator_dirty = false;
 			}
 
-			cairo_arc(cairo, buffer_width / 2, buffer_diameter / 2,
-					arc_radius, highlight_start,
-					highlight_start + TYPE_INDICATOR_RANGE);
+			cairo_set_line_width(cairo, arc_thickness);
+			cairo_rectangle(cairo, highlight_start, 0, highlight_width, arc_thickness);
+
 			if (state->auth_state == AUTH_STATE_INPUT) {
 				if (state->xkb.caps_lock && state->args.show_caps_lock_indicator) {
 					cairo_set_source_u32(cairo, state->args.colors.caps_lock_key_highlight);
@@ -411,30 +410,20 @@ void render_indicator_frame(struct swaylock_surface *surface) {
 					cairo_set_source_u32(cairo, state->args.colors.bs_highlight);
 				}
 			}
-			cairo_stroke(cairo);
+			cairo_fill_preserve(cairo);
 
-			// Draw borders
-			cairo_set_source_u32(cairo, state->args.colors.separator);
-			cairo_arc(cairo, buffer_width / 2, buffer_diameter / 2,
-					arc_radius, highlight_start,
-					highlight_start + type_indicator_border_thickness);
-			cairo_stroke(cairo);
-
-			cairo_arc(cairo, buffer_width / 2, buffer_diameter / 2,
-					arc_radius, highlight_start + TYPE_INDICATOR_RANGE,
-					highlight_start + TYPE_INDICATOR_RANGE +
-						type_indicator_border_thickness);
-			cairo_stroke(cairo);
+			
 		}
 
-		// Draw inner + outer border of the circle
-		set_color_for_state(cairo, state, &state->args.colors.line);
+		// Draw borders
+		cairo_set_source_u32(cairo, state->args.colors.separator);
 		cairo_set_line_width(cairo, 2.0 * surface->scale);
-		cairo_arc(cairo, buffer_width / 2, buffer_diameter / 2,
-				arc_radius - arc_thickness / 2, 0, 2 * M_PI);
 		cairo_stroke(cairo);
-		cairo_arc(cairo, buffer_width / 2, buffer_diameter / 2,
-				arc_radius + arc_thickness / 2, 0, 2 * M_PI);
+
+		cairo_rectangle(cairo, surface->scale, surface->scale, buffer_width-(surface->scale*2), buffer_height-(surface->scale*2)); 
+		cairo_stroke(cairo);
+
+		cairo_rectangle(cairo, surface->scale, surface->scale, buffer_width, arc_thickness);
 		cairo_stroke(cairo);
 
 		// display layout text separately
@@ -497,13 +486,45 @@ void render_indicator_frame(struct swaylock_surface *surface) {
 void render_notifications(cairo_t *cairo, struct swaylock_state *state, int spacing,
 		int key_height, int key_width, int pos_x, int pos_y) {
 
-	size_t notif_amt = 5;
+	bool stamp = false;
+	size_t notif_amt = 0;
+	int notif_size = 0;
+	char msg[2000] = "CECFC: come to this event we know you care so much about #PlzCome\nYesterday at 09:00\nDad: take out the trash\n5h ago\n";
+
 	char notifs[5][90];
-	strcpy(notifs[0], "Dad: take out the trash");
-	strcpy(notifs[1], "CECFC: come to our event that nobody cares about");
-	strcpy(notifs[2], "Email: attend our college you know nothing about and wont go to");
-	strcpy(notifs[3], "Email: attend our college you know nothing about and wont go to");
-	strcpy(notifs[4], "Email: attend our college you know nothing about and wont go to");
+	char notif_stamps[5][90];
+
+
+	for (int i = 0; i < (int)strlen(msg); i++) {
+		//  Store the current iteration position
+		notif_size = i;
+		//  Add to size till a newline is found
+		while (msg[notif_size] != '\n') notif_size++;
+		//  Subtract x to get the size of the message
+		notif_size -= i;
+		if (notif_size > 30) notif_size = 30;
+
+		printf("(%i) [%.*s]\n", stamp, notif_size, msg+i);
+
+		//  Append to timestamp list
+		if (stamp) {
+			memcpy(notif_stamps[notif_amt++], msg+i, notif_size);
+			stamp = false;
+		//  Append to notification list
+		} else {
+			memcpy(notifs[notif_amt++], msg+i, notif_size);
+			stamp = true;
+		}
+
+		notif_size = 0;
+		while (msg[i] != '\n') i++;
+	}
+
+	printf("done\n");
+
+	printf("%s\n%s", notifs[0], notifs[1]);
+
+
 
 	cairo_set_font_size(cairo, 30);
 
