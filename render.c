@@ -487,7 +487,7 @@ void render_notifications(cairo_t *cairo, struct swaylock_state *state, int spac
 		int key_height, int key_width, int pos_x, int pos_y) {
 
 	bool stamp = false;
-	size_t notif_amt = 0;
+	size_t notif_amt = 0, stamp_amt = 0;
 	int notif_size = 0;
 	char msg[2000] = "CECFC: come to this event we know you care so much about #PlzCome\nYesterday at 09:00\nDad: take out the trash\n5h ago\n";
 
@@ -508,7 +508,7 @@ void render_notifications(cairo_t *cairo, struct swaylock_state *state, int spac
 
 		//  Append to timestamp list
 		if (stamp) {
-			memcpy(notif_stamps[notif_amt++], msg+i, notif_size);
+			memcpy(notif_stamps[stamp_amt++], msg+i, notif_size);
 			stamp = false;
 		//  Append to notification list
 		} else {
