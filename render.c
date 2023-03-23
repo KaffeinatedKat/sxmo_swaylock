@@ -653,7 +653,7 @@ void render_keypad_frame(struct swaylock_surface *surface) {
 	
 		draw_keypad_key(cairo, state, "Unlock", pos_x, pos_y, key_width*3+spacing*2, key_height);
 
-	} else if (state->args.notifications) {
+	} else if (state->args.show_keypad == 0 && state->args.notifications) {
 		render_notifications(cairo, state, spacing, key_height, key_width, pos_x, pos_y);
 	}
 	
