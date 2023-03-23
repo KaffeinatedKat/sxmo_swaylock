@@ -250,7 +250,15 @@ void wl_touch_down(void *data, struct wl_touch *wl_touch, uint32_t serial,
 
 void wl_touch_up(void *data, struct wl_touch *wl_touch, uint32_t serial,
 		uint32_t time, int32_t id) {
-	/*kbd_release_key(&keyboard, time);*/
+
+	struct swaylock_seat *seat = data;
+	struct swaylock_state *state = seat->state;
+
+	//  Erase the swipe buffer when touch is ended
+	state->swipe_count = 0;
+
+	memset(&state->swipe_x, 0, 128);
+	memset(&state->swipe_y, 0, 128);
 }
 
 void wl_touch_motion(void *data, struct wl_touch *wl_touch, uint32_t time,
@@ -260,35 +268,34 @@ void wl_touch_motion(void *data, struct wl_touch *wl_touch, uint32_t time,
 	struct swaylock_state *state = seat->state;
 	uint32_t touch_x, touch_y;
 	int vertical_distance;
+	
+	touch_x = wl_fixed_to_int(x);
+	touch_y = wl_fixed_to_int(y);
 
 	// Exit if swipe gestures disabled
 	if (state->args.swipe_gestures == false) {
 		return;
 	}
-	
-	touch_x = wl_fixed_to_int(x);
-	touch_y = wl_fixed_to_int(y);
 
-	if (state->swipe_count < 15) {
+
+	if (state->swipe_count < 128) {
 		state->swipe_x[state->swipe_count] = touch_x;
 		state->swipe_y[state->swipe_count] = touch_y;
 		state->swipe_count++;
-	} else {
-		vertical_distance = abs(state->swipe_y[0] - state->swipe_y[state->swipe_count - 1]);
+	} else { return; }
 
-		// Swipe up
-		if (state->swipe_y[0] > state->swipe_y[state->swipe_count - 1]
-		    && vertical_distance > 100) {
+	vertical_distance = abs(state->swipe_y[0] - state->swipe_y[state->swipe_count - 1]);
 
-			state->args.show_keypad = true;
+	// Swipe up
+	if (state->swipe_y[0] > state->swipe_y[state->swipe_count - 1]
+		&& vertical_distance > 400) {
 
-		// Swipe down
-		} else if (state->swipe_y[0] < state->swipe_y[state->swipe_count - 1]
-				   && vertical_distance > 100) {
-			state->args.show_keypad = false;
-		}
+		state->args.show_keypad = true;
 
-		state->swipe_count = 0;
+	// Swipe down
+	} else if (state->swipe_y[0] < state->swipe_y[state->swipe_count - 1]
+			   && vertical_distance > 400) {
+		state->args.show_keypad = false;
 	}
 }
 
