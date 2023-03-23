@@ -259,6 +259,7 @@ void wl_touch_motion(void *data, struct wl_touch *wl_touch, uint32_t time,
 	struct swaylock_seat *seat = data;
 	struct swaylock_state *state = seat->state;
 	uint32_t touch_x, touch_y;
+	int vertical_distance;
 
 	// Exit if swipe gestures disabled
 	if (state->args.swipe_gestures == false) {
@@ -268,17 +269,22 @@ void wl_touch_motion(void *data, struct wl_touch *wl_touch, uint32_t time,
 	touch_x = wl_fixed_to_int(x);
 	touch_y = wl_fixed_to_int(y);
 
-	if (state->swipe_count < 10) {
+	if (state->swipe_count < 15) {
 		state->swipe_x[state->swipe_count] = touch_x;
 		state->swipe_y[state->swipe_count] = touch_y;
 		state->swipe_count++;
 	} else {
+		vertical_distance = abs(state->swipe_y[0] - state->swipe_y[state->swipe_count - 1]);
+
 		// Swipe up
-		if (state->swipe_y[0] > state->swipe_y[state->swipe_count - 1]) {
+		if (state->swipe_y[0] > state->swipe_y[state->swipe_count - 1]
+		    && vertical_distance > 100) {
+
 			state->args.show_keypad = true;
 
 		// Swipe down
-		} else if (state->swipe_y[0] < state->swipe_y[state->swipe_count - 1]) {
+		} else if (state->swipe_y[0] < state->swipe_y[state->swipe_count - 1]
+				   && vertical_distance > 100) {
 			state->args.show_keypad = false;
 		}
 
