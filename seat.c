@@ -288,14 +288,16 @@ void wl_touch_motion(void *data, struct wl_touch *wl_touch, uint32_t time,
 
 	// Swipe up
 	if (state->swipe_y[0] > state->swipe_y[state->swipe_count - 1]
-		&& vertical_distance > 400) {
+		&& vertical_distance > 350) {
 
 		state->args.show_keypad = true;
+		state->swipe_count = 0;
 
 	// Swipe down
 	} else if (state->swipe_y[0] < state->swipe_y[state->swipe_count - 1]
-			   && vertical_distance > 400) {
+			   && vertical_distance > 350) {
 		state->args.show_keypad = false;
+		state->swipe_count = 0;
 	}
 }
 
