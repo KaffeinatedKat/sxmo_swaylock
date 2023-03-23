@@ -66,7 +66,8 @@ static void timetext(struct swaylock_surface *surface, char **tstr, char **dstr)
 }
 
 void draw_notification(cairo_t *cairo, struct swaylock_state *state,
-		char *text, char *timestamp, int pos_x, int pos_y, int width, int height) {
+		char text[30], char *timestamp, int pos_x, int pos_y, int width, int height) {
+	printf("\ndraw: %s\n", text);
 
 	set_color_for_state(cairo, state, &state->args.colors.inside);
 	cairo_rectangle(cairo, pos_x, pos_y, width, height);
@@ -489,10 +490,10 @@ void render_notifications(cairo_t *cairo, struct swaylock_state *state, int spac
 	bool stamp = false;
 	size_t notif_amt = 0, stamp_amt = 0;
 	int notif_size = 0;
-	char msg[2000] = "CECFC: come to this event we know you care so much about #PlzCome\nYesterday at 09:00\nDad: take out the trash\n5h ago\n";
+	char msg[2000] = "CECFC: come to this event we know you care so much about #PlzCome\nYesterday at 09:00\nDad: take out the trash\n5h ago";
 
-	char notifs[5][90];
-	char notif_stamps[5][90];
+	char notifs[5][31] = {};
+	char notif_stamps[5][31] = {};
 
 
 	for (int i = 0; i < (int)strlen(msg); i++) {
@@ -503,16 +504,18 @@ void render_notifications(cairo_t *cairo, struct swaylock_state *state, int spac
 		//  Subtract x to get the size of the message
 		notif_size -= i;
 		if (notif_size > 30) notif_size = 30;
+		else if (notif_size <= 0) return;
 
-		printf("(%i) [%.*s]\n", stamp, notif_size, msg+i);
 
 		//  Append to timestamp list
 		if (stamp) {
-			memcpy(notif_stamps[stamp_amt++], msg+i, notif_size);
+			memcpy(notif_stamps[stamp_amt], msg+i, notif_size);
+			notif_stamps[stamp_amt++][notif_size] = '\0';
 			stamp = false;
 		//  Append to notification list
 		} else {
-			memcpy(notifs[notif_amt++], msg+i, notif_size);
+			memcpy(notifs[notif_amt], msg+i, notif_size);
+			notifs[notif_amt++][notif_size] = '\0';
 			stamp = true;
 		}
 
@@ -520,23 +523,17 @@ void render_notifications(cairo_t *cairo, struct swaylock_state *state, int spac
 		while (msg[i] != '\n') i++;
 	}
 
-	printf("done\n");
-
-	printf("%s\n%s", notifs[0], notifs[1]);
-
-
-
 	cairo_set_font_size(cairo, 30);
 
-	for (uint32_t x = 0; x < state->args.notification_count + 1; x++) {
+	for (uint32_t x = 0; x < notif_amt; x++) {
 		int y = pos_y - ((spacing + key_height) * x);
-		if (x == state->args.notification_count) {
+		if (x >= state->args.notification_count) {
 			char more_notifs[50];
 
 			sprintf(more_notifs, "+%ld more . . .", notif_amt - x);
 			draw_notification(cairo, state, more_notifs, "", pos_x, y, key_width*3+spacing*2, key_height);
+			return;
 		} else {
-			printf("%i\n", y);
 			draw_notification(cairo, state, notifs[x], "34m ago", pos_x, y, key_width*3+spacing*2, key_height);
 		}
 	}
@@ -650,7 +647,7 @@ void render_keypad_frame(struct swaylock_surface *surface) {
 				draw_keypad_key(cairo, state, label, pos_x, pos_y, key_width, key_height);
 			}
 		}
-	
+
 		draw_keypad_key(cairo, state, "Unlock", pos_x, pos_y, key_width*3+spacing*2, key_height);
 
 	} else if (state->args.show_keypad == 0 && state->args.notifications) {
