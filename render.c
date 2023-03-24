@@ -196,6 +196,10 @@ void render_indicator_frame(struct swaylock_surface *surface) {
 			(state->args.radius + state->args.thickness);
 	}
 
+	if (state->args.override_indicator_length) {
+		new_width = state->args.indicator_length;
+	}
+
 	wl_subsurface_set_position(surface->subsurface, subsurf_xpos, subsurf_ypos / 2);
 
 	surface->current_buffer = get_next_buffer(state->shm,

@@ -62,10 +62,12 @@ struct swaylock_args {
 	uint32_t thickness;
 	uint32_t indicator_x_position;
 	uint32_t indicator_y_position;
+	uint32_t indicator_length;
 	uint32_t notification_count;
 	bool notifications;
 	bool override_indicator_x_position;
 	bool override_indicator_y_position;
+	bool override_indicator_length;
 	bool swipe_gestures;
 	bool ignore_empty;
 	bool show_indicator;

@@ -986,6 +986,7 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 		LO_IND_RADIUS,
 		LO_IND_X_POSITION,
 		LO_IND_Y_POSITION,
+		LO_IND_LENGTH,
 		LO_IND_THICKNESS,
 		LO_INSIDE_COLOR,
 		LO_INSIDE_CLEAR_COLOR,
@@ -1065,6 +1066,7 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 		{"indicator-thickness", required_argument, NULL, LO_IND_THICKNESS},
 		{"indicator-x-position", required_argument, NULL, LO_IND_X_POSITION},
 		{"indicator-y-position", required_argument, NULL, LO_IND_Y_POSITION},
+		{"indicator-length", required_argument, NULL, LO_IND_LENGTH},
 		{"inside-color", required_argument, NULL, LO_INSIDE_COLOR},
 		{"inside-clear-color", required_argument, NULL, LO_INSIDE_CLEAR_COLOR},
 		{"inside-caps-lock-color", required_argument, NULL, LO_INSIDE_CAPS_LOCK_COLOR},
@@ -1196,6 +1198,8 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 			"Sets the horizontal position of the indicator.\n"
 		"  --indicator-y-position <y>       "
 			"Sets the vertical position of the indicator.\n"
+		"  --indicator-length               "
+		        "Sets the length of the indicator.\n"
 		"  --inside-color <color>           "
 			"Sets the color of the inside of the indicator.\n"
 		"  --inside-clear-color <color>     "
@@ -1443,6 +1447,12 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 			if (state) {
 				state->args.override_indicator_y_position = true;
 				state->args.indicator_y_position = atoi(optarg);
+			}
+			break;
+		case LO_IND_LENGTH:
+			if (state) {
+				state->args.override_indicator_length = true;
+				state->args.indicator_length = atoi(optarg);
 			}
 			break;
 		case LO_INSIDE_COLOR:
@@ -1847,6 +1857,7 @@ int main(int argc, char **argv) {
 		.indicator_y_position = 0,
 		.override_indicator_x_position = false,
 		.override_indicator_y_position = false,
+		.override_indicator_length = false,
 		.ignore_empty = false,
 		.show_indicator = true,
 		.show_caps_lock_indicator = false,
