@@ -8,6 +8,17 @@ int fetch_notifications(struct swaylock_state *state) {
 	//memset(state->fetch.notification_buffer, 0, 4096);
 	int buff_size = 0;
 	int err = errno;
+
+	//  Check for errors and disable notifications
+	if (strcmp(state->args.shell_dir, "") == 0) {
+		swaylock_log(LOG_ERROR, "--shell-directory not set, disabling notifications");
+		state->args.notifications = false;
+		return 1;
+	} else if (access(state->notifications_sh, F_OK) != 0) {
+		swaylock_log(LOG_ERROR, "notifications.sh not found at '%s', disabling notifications", state->notifications_sh);
+		state->args.notifications = false;
+		return 1;
+	}
 	
 
 	if (pipe(state->fetch.out) == -1) {

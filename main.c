@@ -1841,7 +1841,11 @@ static void comm_in(int fd, short mask, void *data) {
 static void timer_render(void *data) {
 	struct swaylock_state *state = (struct swaylock_state *)data;
 	damage_state(state);
-	fetch_notifications(state);
+	
+	if (state->args.notifications) {
+		fetch_notifications(state);
+	}
+
 	loop_add_timer(state->eventloop, 1000, timer_render, state);
 }
 
@@ -1857,8 +1861,8 @@ int main(int argc, char **argv) {
 	state.notification_amt = 0;
 	state.stamp_amt = 0;
 	state.args = (struct swaylock_args){
-		.shell_dir = "/usr/local/bin/",
-		.shell_dir_len = strlen("/usr/local/bin/"),
+		.shell_dir = "",
+		.shell_dir_len = 0,
 		.show_keypad = true,
 		.swipe_gestures = false,
 		.notifications = false,
@@ -1927,10 +1931,12 @@ int main(int argc, char **argv) {
 	}
 
 	//  Allocate and define notification script path
-	state.notifications_sh = malloc(sizeof(char*) * state.args.shell_dir_len + 17);
-	memcpy(state.notifications_sh, state.args.shell_dir, state.args.shell_dir_len);
-	memcpy(state.notifications_sh+state.args.shell_dir_len, "notifications.sh", 17);
-	swaylock_log(LOG_DEBUG, "notification script path set at '%s'", state.notifications_sh);
+	if (strcmp(state.args.shell_dir, "") != 0) {
+		state.notifications_sh = malloc(sizeof(char*) * state.args.shell_dir_len + 17);
+		memcpy(state.notifications_sh, state.args.shell_dir, state.args.shell_dir_len);
+		memcpy(state.notifications_sh+state.args.shell_dir_len, "notifications.sh", 17);
+		swaylock_log(LOG_DEBUG, "notification script path set at '%s'", state.notifications_sh);
+	}
 
 	if (line_mode == LM_INSIDE) {
 		state.args.colors.line = state.args.colors.inside;
@@ -2066,8 +2072,6 @@ int main(int argc, char **argv) {
 		loop_add_timer(state.eventloop, state.args.password_grace_period, end_grace_period, &state);
 	}
 
-	fetch_notifications(&state);
-
 	// Re-draw once to start the draw loop
 	damage_state(&state);
 
@@ -2088,6 +2092,7 @@ int main(int argc, char **argv) {
 		wl_display_flush(state.display);
 	}
 
+	if (strcmp(state.args.shell_dir, "") != 0) { free(state.notifications_sh); }
 	free(state.args.font);
 	return 0;
 }
