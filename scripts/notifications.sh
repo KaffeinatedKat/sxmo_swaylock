@@ -1,25 +1,17 @@
 #!/bin/bash
 
 # Include common sxmo definitions
-#. sxmo_common.sh
+. sxmo_common.sh
 
 DATE="$(date +%s)"
 
-get_sxmo_notifs() {
-    for NOTIFFILE in $(ls -tr "$SXMO_NOTFIDIR"); do
-        # The message of the notification
-        MSG="$(tail -n+3 "$SXMO_NOTIFDIR/$NOTIFFILE" | tr "\n^" " ")"
-
-
-    done
-}
-
 get_notifs() {
     NOTIFS=""
-    for NOTIFFILE in $(ls -tr "$1"); do
-        MSG="$(tail -n+3 "$1/$NOTIFFILE" | tr "\n^" " ")"
-NOTIFS="$MSG
-$(time_string "$1/$NOTIFFILE")
+    for NOTIFFILE in $(ls -tr "$SXMO_NOTIFDIR"); do
+        MSG="$(tail -n+3 "$SXMO_NOTIFDIR/$NOTIFFILE" | tr "\n^" " ")"
+
+	NOTIFS="${MSG::-1}
+$(time_string "$SXMO_NOTIFDIR/$NOTIFFILE")
 $NOTIFS"
 
     done
@@ -44,4 +36,4 @@ time_string() {
     fi
 }
 
-get_notifs "/home/coffee/swaylock-effects/notifs/"
+get_notifs
