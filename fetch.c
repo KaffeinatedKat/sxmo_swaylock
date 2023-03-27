@@ -44,7 +44,7 @@ int fetch_notifications(struct swaylock_state *state) {
 	}
 
 	//  Script returns size of 1 if there are no notifications
-	if (buff_size > 1) {
+	if (buff_size <= 1) {
 		return 0;
 	}
 
