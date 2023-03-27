@@ -975,6 +975,7 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 		LO_TRACE,
 		LO_MARGIN, 
 		LO_SWIPE_GESTURES,
+		LO_SHELL_DIR,
 		LO_NOTIFICATIONS,
 		LO_NOTIF_COUNT,
 		LO_BS_HL_COLOR = 256,
@@ -1041,6 +1042,7 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 		{"daemonize", no_argument, NULL, 'f'},
 		{"help", no_argument, NULL, 'h'},
 		{"image", required_argument, NULL, 'i'},
+		{"shell-directory", required_argument, NULL, LO_SHELL_DIR},
 		{"notifications", no_argument, NULL, LO_NOTIFICATIONS},
 		{"notification-count", required_argument, NULL, LO_NOTIF_COUNT},
 		{"swipe-gestures", no_argument, NULL, LO_SWIPE_GESTURES},
@@ -1160,6 +1162,8 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 			"Same as --scaling=tile.\n"
 		"  -u, --no-unlock-indicator        "
 			"Disable the unlock indicator.\n"
+		"  --shell-directory                "
+		    "Directory containing the shell scripts (defaults to ~/sxmo_swaylock/scripts, setting this is reccomended).\n"
 		"  --notifications                  "
 			"Display notifications when the keypad is down.\n"
 		"  --notification-count             "
@@ -1379,6 +1383,13 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 		case 'v':
 			fprintf(stdout, "swaylock version " SWAYLOCK_VERSION "\n");
 			exit(EXIT_SUCCESS);
+			break;
+		case LO_SHELL_DIR:
+			if (state) {
+				state->args.shell_dir_len = strlen(optarg);
+				state->args.shell_dir = malloc(sizeof(char*) * state->args.shell_dir_len);
+				memcpy(state->args.shell_dir, optarg, state->args.shell_dir_len);
+			}
 			break;
 		case LO_NOTIF_COUNT:
 			if (state) {
@@ -1830,6 +1841,7 @@ static void comm_in(int fd, short mask, void *data) {
 static void timer_render(void *data) {
 	struct swaylock_state *state = (struct swaylock_state *)data;
 	damage_state(state);
+	fetch_notifications(state);
 	loop_add_timer(state->eventloop, 1000, timer_render, state);
 }
 
@@ -1842,7 +1854,11 @@ int main(int argc, char **argv) {
 	state.failed_attempts = 0;
 	state.indicator_dirty = false;
 	state.swipe_count = 0;
+	state.notification_amt = 0;
+	state.stamp_amt = 0;
 	state.args = (struct swaylock_args){
+		.shell_dir = "/usr/local/bin/",
+		.shell_dir_len = strlen("/usr/local/bin/"),
 		.show_keypad = true,
 		.swipe_gestures = false,
 		.notifications = false,
@@ -1877,6 +1893,7 @@ int main(int argc, char **argv) {
 		.allow_fade = true,
 		.password_grace_period = 0,
 	};
+
 	wl_list_init(&state.images);
 	set_default_colors(&state.args.colors);
 
@@ -1908,6 +1925,12 @@ int main(int argc, char **argv) {
 			return result;
 		}
 	}
+
+	swaylock_log(LOG_DEBUG, "notification script path set at '%s'", state.notifications_sh);
+	//  Allocate and define notification script path
+	state.notifications_sh = malloc(sizeof(char*) * state.args.shell_dir_len + 17);
+	memcpy(state.notifications_sh, state.args.shell_dir, state.args.shell_dir_len);
+	memcpy(state.notifications_sh+state.args.shell_dir_len, "notifications.sh", 17);
 
 	if (line_mode == LM_INSIDE) {
 		state.args.colors.line = state.args.colors.inside;
@@ -2042,6 +2065,8 @@ int main(int argc, char **argv) {
 	if (state.args.password_grace_period > 0) {
 		loop_add_timer(state.eventloop, state.args.password_grace_period, end_grace_period, &state);
 	}
+
+	fetch_notifications(&state);
 
 	// Re-draw once to start the draw loop
 	damage_state(&state);

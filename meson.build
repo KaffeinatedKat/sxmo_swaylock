@@ -143,6 +143,7 @@ sources = [
 	'unicode.c',
 	'effects.c',
 	'fade.c',
+    'fetch.c',
 ]
 
 if libpam.found()

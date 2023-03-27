@@ -1,7 +1,12 @@
 #ifndef _SWAYLOCK_H
 #define _SWAYLOCK_H
 #include <stdbool.h>
+#include <unistd.h>
 #include <stdint.h>
+#include <sys/wait.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <errno.h>
 #include <wayland-client.h>
 #include "background-image.h"
 #include "cairo.h"
@@ -25,6 +30,12 @@ enum auth_state {
 enum box_type {
 	TYPE_RENDER_KEY,
 	TYPE_RENDER_NOTIFICATION,
+};
+
+
+struct swaylock_fetch {
+	int out[2];
+	char notification_buffer[4096];
 };
 
 struct swaylock_colorset {
@@ -56,6 +67,9 @@ struct swaylock_colors {
 struct swaylock_args {
 	struct swaylock_colors colors; enum background_mode mode;
 	char *font;
+	char *shell_dir;
+	char *notification_dir;
+	uint32_t shell_dir_len;
 	uint32_t margin; 
 	uint32_t font_size;
 	uint32_t radius;
@@ -112,12 +126,16 @@ struct swaylock_state {
 	struct zwlr_input_inhibit_manager_v1 *input_inhibit_manager;
 	struct zwlr_screencopy_manager_v1 *screencopy_manager;
 	struct wl_shm *shm;
+	struct swaylock_fetch fetch;
 	struct wl_list surfaces;
 	struct wl_list images;
 	struct swaylock_args args;
 	struct swaylock_password password;
 	struct swaylock_xkb xkb;
 	enum auth_state auth_state;
+	char* notifications_sh;
+	char notification_msgs[5][51], notification_stamps[5][51];
+	size_t notification_amt, stamp_amt;
 	int swipe_x[50], swipe_y[50], swipe_count;
 	bool indicator_dirty;
 	int render_randnum;
@@ -197,5 +215,9 @@ void schedule_indicator_clear(struct swaylock_state *state);
 void initialize_pw_backend(int argc, char **argv);
 void run_pw_backend_child(void);
 void clear_buffer(char *buf, size_t size);
+
+int fetch_notifications(struct swaylock_state *state);
+int parse_notifications(struct swaylock_state *state, char *notifs, int size);
+int fetch_battery();
 
 #endif

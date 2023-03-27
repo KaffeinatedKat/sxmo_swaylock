@@ -67,7 +67,6 @@ static void timetext(struct swaylock_surface *surface, char **tstr, char **dstr)
 
 void draw_notification(cairo_t *cairo, struct swaylock_state *state,
 		char text[30], char *timestamp, int pos_x, int pos_y, int width, int height) {
-	printf("\ndraw: %s\n", text);
 
 	set_color_for_state(cairo, state, &state->args.colors.inside);
 	cairo_rectangle(cairo, pos_x, pos_y, width, height);
@@ -491,54 +490,18 @@ void render_indicator_frame(struct swaylock_surface *surface) {
 void render_notifications(cairo_t *cairo, struct swaylock_state *state, int spacing,
 		int key_height, int key_width, int pos_x, int pos_y) {
 
-	bool stamp = false;
-	size_t notif_amt = 0, stamp_amt = 0;
-	int notif_size = 0;
-	char msg[2000] = "CECFC: come to this event we know you care so much about #PlzCome\nYesterday at 09:00\nDad: take out the trash\n5h ago";
-
-	char notifs[5][31] = {};
-	char notif_stamps[5][31] = {};
-
-
-	for (int i = 0; i < (int)strlen(msg); i++) {
-		//  Store the current iteration position
-		notif_size = i;
-		//  Add to size till a newline is found
-		while (msg[notif_size] != '\n') notif_size++;
-		//  Subtract x to get the size of the message
-		notif_size -= i;
-		if (notif_size > 30) notif_size = 30;
-		else if (notif_size <= 0) return;
-
-
-		//  Append to timestamp list
-		if (stamp) {
-			memcpy(notif_stamps[stamp_amt], msg+i, notif_size);
-			notif_stamps[stamp_amt++][notif_size] = '\0';
-			stamp = false;
-		//  Append to notification list
-		} else {
-			memcpy(notifs[notif_amt], msg+i, notif_size);
-			notifs[notif_amt++][notif_size] = '\0';
-			stamp = true;
-		}
-
-		notif_size = 0;
-		while (msg[i] != '\n') i++;
-	}
-
 	cairo_set_font_size(cairo, 30);
 
-	for (uint32_t x = 0; x < notif_amt; x++) {
+	for (uint32_t x = 0; x < state->notification_amt; x++) {
 		int y = pos_y - ((spacing + key_height) * x);
 		if (x >= state->args.notification_count) {
 			char more_notifs[50];
 
-			sprintf(more_notifs, "+%ld more . . .", notif_amt - x);
+			sprintf(more_notifs, "+%ld more . . .", state->notification_amt - x);
 			draw_notification(cairo, state, more_notifs, "", pos_x, y, key_width*3+spacing*2, key_height);
 			return;
 		} else {
-			draw_notification(cairo, state, notifs[x], "34m ago", pos_x, y, key_width*3+spacing*2, key_height);
+			draw_notification(cairo, state, state->notification_msgs[x], state->notification_stamps[x], pos_x, y, key_width*3+spacing*2, key_height);
 		}
 	}
 }
