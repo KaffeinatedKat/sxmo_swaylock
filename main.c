@@ -1926,11 +1926,11 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	swaylock_log(LOG_DEBUG, "notification script path set at '%s'", state.notifications_sh);
 	//  Allocate and define notification script path
 	state.notifications_sh = malloc(sizeof(char*) * state.args.shell_dir_len + 17);
 	memcpy(state.notifications_sh, state.args.shell_dir, state.args.shell_dir_len);
 	memcpy(state.notifications_sh+state.args.shell_dir_len, "notifications.sh", 17);
+	swaylock_log(LOG_DEBUG, "notification script path set at '%s'", state.notifications_sh);
 
 	if (line_mode == LM_INSIDE) {
 		state.args.colors.line = state.args.colors.inside;
