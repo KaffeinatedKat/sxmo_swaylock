@@ -1,6 +1,7 @@
 #include "log.h"
 #include "swaylock.h"
 #include <errno.h>
+#include <stdio.h>
 
 
 int fetch_notifications(struct swaylock_state *state) {
@@ -42,15 +43,15 @@ int fetch_notifications(struct swaylock_state *state) {
 		}
 	}
 
+	//  Script returns size of 1 if there are no notifications
+	if (buff_size > 1) {
+		return 0;
+	}
+
 	read(state->fetch.out[0], &state->fetch.notification_buffer, buff_size);
 	swaylock_log(LOG_DEBUG, "Notification script length: %d", buff_size);
 
-	//  Script returns size of 1 if there are no notifications
-	if (buff_size == 1) {
-		return 0;
-	} else {
-		return parse_notifications(state, state->fetch.notification_buffer, buff_size);
-	}
+	return parse_notifications(state, state->fetch.notification_buffer, buff_size);
 }
 
 int parse_notifications(struct swaylock_state *state, char *notifs, int size) {
