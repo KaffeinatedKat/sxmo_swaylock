@@ -1938,6 +1938,11 @@ int main(int argc, char **argv) {
 		swaylock_log(LOG_DEBUG, "notification script path set at '%s'", state.notifications_sh);
 	}
 
+
+	if (state.args.notifications) {
+		fetch_notifications(&state);
+	}
+
 	if (line_mode == LM_INSIDE) {
 		state.args.colors.line = state.args.colors.inside;
 	} else if (line_mode == LM_RING) {
@@ -2071,6 +2076,7 @@ int main(int argc, char **argv) {
 	if (state.args.password_grace_period > 0) {
 		loop_add_timer(state.eventloop, state.args.password_grace_period, end_grace_period, &state);
 	}
+
 
 	// Re-draw once to start the draw loop
 	damage_state(&state);

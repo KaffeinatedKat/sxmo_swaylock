@@ -79,8 +79,9 @@ int parse_notifications(struct swaylock_state *state, char *notifs, int size) {
 		while (notifs[notif_size] != '\n') { notif_size++; }
 		//  Subtract i to get the size of the messages
 		notif_size -= i;
-		if (notif_size > 50) { notif_size = 50; }
-		else if (notif_size <= 0) {
+		if (notif_size > 45) { 
+			notif_size = 45;
+		} else if (notif_size <= 0) {
 			return 0; //  End of output
 		}
 

@@ -3,6 +3,7 @@
 #include <xkbcommon/xkbcommon.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <unistd.h>
 
 struct loop;
 struct loop_timer;

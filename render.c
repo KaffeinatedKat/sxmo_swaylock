@@ -93,9 +93,17 @@ void draw_notification(cairo_t *cairo, struct swaylock_state *state,
 
 void draw_keypad_key(cairo_t *cairo, struct swaylock_state *state,
 		char *text, int pos_x, int pos_y, int width, int height) {
+	//  Draw button
 	set_color_for_state(cairo, state, &state->args.colors.inside);
 	cairo_rectangle(cairo, pos_x, pos_y, width, height);
 	cairo_fill(cairo);
+
+	//  Draw border
+	cairo_set_source_u32(cairo, state->args.colors.separator);
+	cairo_set_line_width(cairo, 4);
+
+	cairo_rectangle(cairo, pos_x, pos_y, width, height); 
+	cairo_stroke(cairo);
 	// Draw text
 	cairo_text_extents_t extents;
 	cairo_font_extents_t fe;
@@ -166,6 +174,7 @@ void render_background_fade(struct swaylock_surface *surface, uint32_t time) {
 
 void render_indicator_frame(struct swaylock_surface *surface) {
 	struct swaylock_state *state = surface->state;
+	render_frame_background(surface, true);
 
 	int arc_radius = state->args.radius * surface->scale;
 	int arc_thickness = state->args.thickness * surface->scale;
@@ -198,6 +207,10 @@ void render_indicator_frame(struct swaylock_surface *surface) {
 
 	if (state->args.override_indicator_length) {
 		new_width = state->args.indicator_length;
+	}
+
+	if (state->args.show_quickaction) {
+		new_height += 150;
 	}
 
 	wl_subsurface_set_position(surface->subsurface, subsurf_xpos, subsurf_ypos / 2);
@@ -242,7 +255,9 @@ void render_indicator_frame(struct swaylock_surface *surface) {
 			(upstream_show_indicator && state->auth_state != AUTH_STATE_GRACE)) {
 		// Fill background box
 		cairo_set_line_width(cairo, 0);
-		cairo_rectangle(cairo, 0, 0, buffer_width, buffer_height);
+		if (state->args.show_quickaction) { cairo_rectangle(cairo, 0, 0, buffer_width, buffer_height); } 
+		else { cairo_rectangle(cairo, 0, 0, buffer_width, buffer_height); }
+
 		set_color_for_state(cairo, state, &state->args.colors.inside);
 		cairo_fill_preserve(cairo);
 		cairo_stroke(cairo);

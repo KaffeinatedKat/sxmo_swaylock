@@ -272,6 +272,7 @@ void wl_touch_motion(void *data, struct wl_touch *wl_touch, uint32_t time,
 	touch_x = wl_fixed_to_int(x);
 	touch_y = wl_fixed_to_int(y);
 
+
 	// Exit if swipe gestures disabled
 	if (state->args.swipe_gestures == false) {
 		return;
@@ -287,16 +288,13 @@ void wl_touch_motion(void *data, struct wl_touch *wl_touch, uint32_t time,
 	vertical_distance = abs(state->swipe_y[0] - state->swipe_y[state->swipe_count - 1]);
 
 	// Swipe up
-	if (state->swipe_y[0] > state->swipe_y[state->swipe_count - 1]
-		&& vertical_distance > 350) {
+	if (state->swipe_y[0] > state->swipe_y[state->swipe_count - 1] && vertical_distance > 350) {
 
-		if (state->args.show_keypad == false) {
-			state->args.show_keypad = true;
-
-		} else if (state->args.show_quickaction) {
+		if (state->args.show_quickaction) {
 			state->args.show_quickaction = false;
-			state->args.override_indicator_y_position = false;
-			state->args.indicator_y_position += 200;
+
+		} else if (state->args.show_keypad == false) {
+			state->args.show_keypad = true;
 
 		}
 
@@ -312,8 +310,7 @@ void wl_touch_motion(void *data, struct wl_touch *wl_touch, uint32_t time,
 
 		} else if (state->args.show_quickaction == false) {
 			state->args.show_quickaction = true;
-			state->args.override_indicator_y_position = true;
-			state->args.indicator_y_position -= 200;
+
 		}
 
 		state->swipe_count = 0;
