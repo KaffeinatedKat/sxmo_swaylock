@@ -255,9 +255,7 @@ void render_indicator_frame(struct swaylock_surface *surface) {
 			(upstream_show_indicator && state->auth_state != AUTH_STATE_GRACE)) {
 		// Fill background box
 		cairo_set_line_width(cairo, 0);
-		if (state->args.show_quickaction) { cairo_rectangle(cairo, 0, 0, buffer_width, buffer_height); } 
-		else { cairo_rectangle(cairo, 0, 0, buffer_width, buffer_height); }
-
+		cairo_rectangle(cairo, 0, 0, buffer_width, buffer_height);
 		set_color_for_state(cairo, state, &state->args.colors.inside);
 		cairo_fill_preserve(cairo);
 		cairo_stroke(cairo);
