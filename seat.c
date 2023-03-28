@@ -290,7 +290,16 @@ void wl_touch_motion(void *data, struct wl_touch *wl_touch, uint32_t time,
 	if (state->swipe_y[0] > state->swipe_y[state->swipe_count - 1]
 		&& vertical_distance > 350) {
 
-		state->args.show_keypad = true;
+		if (state->args.show_keypad == false) {
+			state->args.show_keypad = true;
+
+		} else if (state->args.show_quickaction) {
+			state->args.show_quickaction = false;
+			state->args.override_indicator_y_position = false;
+			state->args.indicator_y_position += 200;
+
+		}
+
 		state->swipe_count = 0;
 		damage_state(state);
 
@@ -298,7 +307,15 @@ void wl_touch_motion(void *data, struct wl_touch *wl_touch, uint32_t time,
 	} else if (state->swipe_y[0] < state->swipe_y[state->swipe_count - 1]
 			   && vertical_distance > 350) {
 
-		state->args.show_keypad = false;
+		if (state->args.show_keypad) {
+			state->args.show_keypad = false;
+
+		} else if (state->args.show_quickaction == false) {
+			state->args.show_quickaction = true;
+			state->args.override_indicator_y_position = true;
+			state->args.indicator_y_position -= 200;
+		}
+
 		state->swipe_count = 0;
 		damage_state(state);
 	}

@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <fcntl.h>
+#include <poll.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
 #include <sys/types.h>
@@ -86,6 +88,7 @@ struct swaylock_args {
 	bool ignore_empty;
 	bool show_indicator;
 	bool show_keypad;
+	bool show_quickaction;
 	bool show_caps_lock_text;
 	bool show_caps_lock_indicator;
 	bool show_keyboard_layout;
