@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <locale.h>
+#include <wayland-client-protocol.h>
 #include <wayland-client.h>
 #include "cairo.h"
 #include "background-image.h"
@@ -475,6 +476,8 @@ void render_indicator_frame(struct swaylock_surface *surface) {
 		destroy_buffer(surface->current_buffer);
 		surface->indicator_width = new_width;
 		surface->indicator_height = new_height;
+		wl_surface_damage_buffer(surface->surface, subsurf_xpos, subsurf_ypos, buffer_width, buffer_height);
+		render_keypad_frame(surface);
 		render_indicator_frame(surface);
 		return;
 	}
