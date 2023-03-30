@@ -266,6 +266,20 @@ void render_indicator_frame(struct swaylock_surface *surface) {
 		cairo_fill_preserve(cairo); 
 		cairo_stroke(cairo);
 
+		//  Draw battery percentage 
+		if (state->args.battery_indicator) {
+			uint32_t charge = atoi(state->battery_capacity);
+
+			//  Change color based on charge level
+			if (state->battery_charging) { cairo_set_source_u32(cairo, state->args.colors.battery_charging); }
+			else if (charge < state->args.battery_critical) { cairo_set_source_u32(cairo, state->args.colors.battery_critical); }
+			else { cairo_set_source_u32(cairo, state->args.colors.battery); }
+
+			cairo_rectangle(cairo, 0, 0, (buffer_width*charge)/100.0, arc_thickness);
+			cairo_fill_preserve(cairo);
+			cairo_stroke(cairo);
+		}
+
 		// Draw a message
 		char *text = NULL;
 		char *text_l1 = NULL;
@@ -402,35 +416,36 @@ void render_indicator_frame(struct swaylock_surface *surface) {
 		if (state->auth_state == AUTH_STATE_INPUT
 				|| state->auth_state == AUTH_STATE_BACKSPACE) {
 
-			static double highlight_start = 0;
-			int highlight_width = (arc_radius*TYPE_INDICATOR_RANGE/M_PI);
-			float border_width = 2.0 * surface->scale;
+			if (state->args.battery_indicator == false) {
+				//  Fallback to swaylock typing indicator
+				static double highlight_start = 0;
+				int highlight_width = (arc_radius*TYPE_INDICATOR_RANGE/M_PI);
+				float border_width = 2.0 * surface->scale;
 
-			if (state->indicator_dirty) {
-				highlight_start =
-					(rand() % (int)(buffer_width - highlight_width - border_width * 2));
-				state->indicator_dirty = false;
-			}
-
-			cairo_set_line_width(cairo, arc_thickness);
-			cairo_rectangle(cairo, highlight_start, 0, highlight_width, arc_thickness);
-
-			if (state->auth_state == AUTH_STATE_INPUT) {
-				if (state->xkb.caps_lock && state->args.show_caps_lock_indicator) {
-					cairo_set_source_u32(cairo, state->args.colors.caps_lock_key_highlight);
-				} else {
-					cairo_set_source_u32(cairo, state->args.colors.key_highlight);
+				if (state->indicator_dirty) {
+					highlight_start =
+						(rand() % (int)(buffer_width - highlight_width - border_width * 2));
+					state->indicator_dirty = false;
 				}
-			} else {
-				if (state->xkb.caps_lock && state->args.show_caps_lock_indicator) {
-					cairo_set_source_u32(cairo, state->args.colors.caps_lock_bs_highlight);
-				} else {
-					cairo_set_source_u32(cairo, state->args.colors.bs_highlight);
-				}
-			}
-			cairo_fill_preserve(cairo);
 
-			
+				cairo_set_line_width(cairo, arc_thickness);
+				cairo_rectangle(cairo, highlight_start, 0, highlight_width, arc_thickness);
+
+				if (state->auth_state == AUTH_STATE_INPUT) {
+					if (state->xkb.caps_lock && state->args.show_caps_lock_indicator) {
+						cairo_set_source_u32(cairo, state->args.colors.caps_lock_key_highlight);
+					} else {
+						cairo_set_source_u32(cairo, state->args.colors.key_highlight);
+					}
+				} else {
+					if (state->xkb.caps_lock && state->args.show_caps_lock_indicator) {
+						cairo_set_source_u32(cairo, state->args.colors.caps_lock_bs_highlight);
+					} else {
+						cairo_set_source_u32(cairo, state->args.colors.bs_highlight);
+					}
+				}
+				cairo_fill_preserve(cairo);
+			}	
 		}
 
 		// Draw borders

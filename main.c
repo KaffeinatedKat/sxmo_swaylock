@@ -916,6 +916,9 @@ static void set_default_colors(struct swaylock_colors *colors) {
 	colors->caps_lock_bs_highlight = 0xDB3300FF;
 	colors->caps_lock_key_highlight = 0x33DB00FF;
 	colors->separator = 0x000000FF;
+	colors->battery = 0x337D00FF;
+	colors->battery_charging = 0xFFEA00FF;
+	colors->battery_critical = 0xFA0000C0;
 	colors->layout_background = 0x000000C0;
 	colors->layout_border = 0x00000000;
 	colors->layout_text = 0xFFFFFFFF;
@@ -983,6 +986,9 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 		LO_CAPS_LOCK_KEY_HL_COLOR,
 		LO_FONT,
 		LO_FONT_SIZE,
+		LO_BATTERY,
+		LO_BATTERY_REFRESH,
+		LO_BATTERY_CRITICAL,
 		LO_IND_IDLE_VISIBLE,
 		LO_IND_RADIUS,
 		LO_IND_X_POSITION,
@@ -1063,6 +1069,9 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 		{"caps-lock-key-hl-color", required_argument, NULL, LO_CAPS_LOCK_KEY_HL_COLOR},
 		{"font", required_argument, NULL, LO_FONT},
 		{"font-size", required_argument, NULL, LO_FONT_SIZE},
+		{"battery-indicator", required_argument, NULL, LO_BATTERY},
+		{"battery-refresh", required_argument, NULL, LO_BATTERY_REFRESH},
+		{"battery-critical", required_argument, NULL, LO_BATTERY_CRITICAL},
 		{"indicator-idle-visible", no_argument, NULL, LO_IND_IDLE_VISIBLE},
 		{"indicator-radius", required_argument, NULL, LO_IND_RADIUS},
 		{"indicator-thickness", required_argument, NULL, LO_IND_THICKNESS},
@@ -1163,13 +1172,20 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 		"  -u, --no-unlock-indicator        "
 			"Disable the unlock indicator.\n"
 		"  --shell-directory                "
-		    "Directory containing the shell scripts (defaults to ~/sxmo_swaylock/scripts, setting this is reccomended).\n"
+		    "Path to the directory containing the shell scripts\n"
 		"  --notifications                  "
 			"Display notifications when the keypad is down.\n"
 		"  --notification-count             "
 		    "Amount of notifications to display at once.\n"
 		"  --swipe-gestures                 "
 			"Swipe up and down to reveal/hide keypad.\n"
+		"  --battery-indicator              "
+		    "Replace the swaylock typing indicator with a battery bar\n"
+			"                                   Must specify the path to the battery (eg. /sys/class/power_supply/BAT0)\n"
+		"  --battery-refresh                "
+		    "How often swaylock checks the battery in seconds (default: 2)"
+		"  --battery-critical               "
+		    "The point at which the battery indicator changes to red (default: 20%)"
 		"  --indicator                      "
 			"Always show the indicator.\n"
 		"  --clock                          "
@@ -1431,6 +1447,34 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 		case LO_FONT_SIZE:
 			if (state) {
 				state->args.font_size = atoi(optarg);
+			}
+			break;
+		case LO_BATTERY:
+			if (state) {
+				state->args.battery_indicator = true;
+				state->args.colors.ring = state->args.colors.inside;
+				
+				state->args.battery_path_len = strlen(optarg);
+				state->args.battery_path = malloc(sizeof(char*) * state->args.battery_path_len);
+				memcpy(state->args.battery_path, optarg, state->args.battery_path_len);
+
+				state->battery_capacity_path = malloc(sizeof(char*) * (state->args.battery_path_len + strlen("capacity")));
+				memcpy(state->battery_capacity_path, state->args.battery_path, state->args.battery_path_len);
+				memcpy(state->battery_capacity_path+state->args.battery_path_len, "capacity", strlen("capacity"));
+				
+				state->battery_status_path = malloc(sizeof(char*) * (state->args.battery_path_len + strlen("status")));
+				memcpy(state->battery_status_path, state->args.battery_path, state->args.battery_path_len);
+				memcpy(state->battery_status_path+state->args.battery_path_len, "status", strlen("status"));
+			}
+			break;
+		case LO_BATTERY_REFRESH:
+			if (state) {
+				state->args.battery_fetch = atoi(optarg);
+			}
+			break;
+		case LO_BATTERY_CRITICAL:
+			if (state) {
+				state->args.battery_critical = atoi(optarg);
 			}
 			break;
 		case LO_IND_IDLE_VISIBLE:
@@ -1849,6 +1893,24 @@ static void timer_render(void *data) {
 	loop_add_timer(state->eventloop, 1000, timer_render, state);
 }
 
+static void get_battery_timer(void *data) {
+	struct swaylock_state *state = (struct swaylock_state *)data;
+	int cap;
+	//int stat;
+	//char status[8];
+
+	cap = open(state->battery_capacity_path, O_RDONLY);
+	//stat = open(state->battery_status_path, O_RDONLY);
+
+	read(cap, state->battery_capacity, 3);
+	//if (strcmp(status, "Charging") == 0) { state->battery_charging = true; }
+	//else { state->battery_charging = false; }
+
+	close(cap);
+	//close(stat);
+	loop_add_timer(state->eventloop, state->args.battery_fetch * 1000, get_battery_timer, state);
+}
+
 int main(int argc, char **argv) {
 	swaylock_log_init(LOG_ERROR);
 	initialize_pw_backend(argc, argv);
@@ -1866,6 +1928,9 @@ int main(int argc, char **argv) {
 		.show_keypad = true,
 		.swipe_gestures = false,
 		.notifications = false,
+		.battery_indicator = false,
+		.battery_critical = 20,
+		.battery_fetch = 2,
 		.notification_count = 4,
 		.mode = BACKGROUND_MODE_FILL,
 		.font = strdup("sans-serif"),
@@ -2063,6 +2128,8 @@ int main(int argc, char **argv) {
 
 	loop_add_timer(state.eventloop, 1000, timer_render, &state);
 
+	if (state.args.battery_indicator) { get_battery_timer(&state); }
+
 	if (state.args.fade_in) {
 		loop_add_timer(state.eventloop, state.args.fade_in, end_allow_fade_period, &state);
 	}
@@ -2099,6 +2166,11 @@ int main(int argc, char **argv) {
 	}
 
 	if (strcmp(state.args.shell_dir, "") != 0) { free(state.notifications_sh); }
+	if (state.args.battery_indicator) { 
+		free(state.args.battery_path);
+		free(state.battery_capacity_path);
+		free(state.battery_status_path);
+	}
 	free(state.args.font);
 	return 0;
 }

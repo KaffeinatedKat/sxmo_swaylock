@@ -49,6 +49,9 @@ struct swaylock_colorset {
 };
 
 struct swaylock_colors {
+	uint32_t battery;
+	uint32_t battery_charging;
+	uint32_t battery_critical;
 	uint32_t background;
 	uint32_t bs_highlight;
 	uint32_t key_highlight;
@@ -71,6 +74,10 @@ struct swaylock_args {
 	char *font;
 	char *shell_dir;
 	char *notification_dir;
+	char *battery_path;
+	uint32_t battery_path_len;
+	uint32_t battery_critical;
+	uint32_t battery_fetch;
 	uint32_t shell_dir_len;
 	uint32_t margin; 
 	uint32_t font_size;
@@ -80,6 +87,7 @@ struct swaylock_args {
 	uint32_t indicator_y_position;
 	uint32_t indicator_length;
 	uint32_t notification_count;
+	bool battery_indicator;
 	bool notifications;
 	bool override_indicator_x_position;
 	bool override_indicator_y_position;
@@ -141,6 +149,10 @@ struct swaylock_state {
 	size_t notification_amt, stamp_amt;
 	int swipe_x[50], swipe_y[50], swipe_count;
 	bool indicator_dirty;
+	char *battery_capacity_path;
+	char *battery_status_path;
+	char battery_capacity[3];
+	bool battery_charging;
 	int render_randnum;
 	int failed_attempts;
 	size_t n_screenshots_done;
