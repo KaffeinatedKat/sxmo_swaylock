@@ -1458,13 +1458,17 @@ static int parse_options(int argc, char **argv, struct swaylock_state *state,
 				state->args.battery_path = malloc(sizeof(char*) * state->args.battery_path_len);
 				memcpy(state->args.battery_path, optarg, state->args.battery_path_len);
 
-				state->battery_capacity_path = malloc(sizeof(char*) * (state->args.battery_path_len + strlen("capacity")));
+				state->battery_capacity_path = malloc(sizeof(char*) * (state->args.battery_path_len + 9));
 				memcpy(state->battery_capacity_path, state->args.battery_path, state->args.battery_path_len);
-				memcpy(state->battery_capacity_path+state->args.battery_path_len, "capacity", strlen("capacity"));
+				memcpy(state->battery_capacity_path+state->args.battery_path_len, "capacity", 8);
+				state->battery_capacity_path[state->args.battery_path_len + 9] = '\0';
+				swaylock_log(LOG_DEBUG, "%s", state->battery_capacity_path);
 				
-				state->battery_status_path = malloc(sizeof(char*) * (state->args.battery_path_len + strlen("status")));
+				state->battery_status_path = malloc(sizeof(char*) * (state->args.battery_path_len + 7));
 				memcpy(state->battery_status_path, state->args.battery_path, state->args.battery_path_len);
-				memcpy(state->battery_status_path+state->args.battery_path_len, "status", strlen("status"));
+				memcpy(state->battery_status_path+state->args.battery_path_len, "status", 7);
+				state->battery_status_path[state->args.battery_path_len + 8] = '\0';
+				swaylock_log(LOG_DEBUG, "%s", state->battery_status_path);
 			}
 			break;
 		case LO_BATTERY_REFRESH:
@@ -1896,18 +1900,20 @@ static void timer_render(void *data) {
 static void get_battery_timer(void *data) {
 	struct swaylock_state *state = (struct swaylock_state *)data;
 	int cap;
-	//int stat;
-	//char status[8];
+	int stat;
+	char status[1];
 
 	cap = open(state->battery_capacity_path, O_RDONLY);
-	//stat = open(state->battery_status_path, O_RDONLY);
+	stat = open(state->battery_status_path, O_RDONLY);
 
 	read(cap, state->battery_capacity, 3);
-	//if (strcmp(status, "Charging") == 0) { state->battery_charging = true; }
-	//else { state->battery_charging = false; }
+	read(stat, status, 1);
+
+	if (*status == 'C') { state->battery_charging = true; }
+	else { state->battery_charging = false; }
 
 	close(cap);
-	//close(stat);
+	close(stat);
 	loop_add_timer(state->eventloop, state->args.battery_fetch * 1000, get_battery_timer, state);
 }
 
