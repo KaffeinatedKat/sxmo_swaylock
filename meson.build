@@ -90,9 +90,9 @@ client_protocols = [
 	[wl_protocol_dir, 'stable/xdg-shell/xdg-shell.xml'],
 	[wl_protocol_dir, 'unstable/xdg-output/xdg-output-unstable-v1.xml'],
 	[wl_protocol_dir, 'staging/ext-session-lock/ext-session-lock-v1.xml'],
-	['wlr-layer-shell-unstable-v1.xml'],
-	['wlr-input-inhibitor-unstable-v1.xml'],
-	['wlr-screencopy-unstable-v1.xml'],
+	['wayland-protocols/wlr-layer-shell-unstable-v1.xml'],
+	['wayland-protocols/wlr-input-inhibitor-unstable-v1.xml'],
+	['wayland-protocols/wlr-screencopy-unstable-v1.xml'],
 ]
 
 foreach p : client_protocols
@@ -130,20 +130,20 @@ dependencies = [
 ]
 
 sources = [
-	'background-image.c',
-	'cairo.c',
-	'comm.c',
-	'log.c',
-	'loop.c',
-	'main.c',
-	'password.c',
-	'pool-buffer.c',
-	'render.c',
-	'seat.c',
-	'unicode.c',
-	'effects.c',
-	'fade.c',
-    'fetch.c',
+	'src/background-image.c',
+	'src/cairo.c',
+	'src/comm.c',
+	'src/log.c',
+	'src/loop.c',
+	'src/main.c',
+	'src/password.c',
+	'src/pool-buffer.c',
+	'src/render.c',
+	'src/seat.c',
+	'src/unicode.c',
+	'src/effects.c',
+	'src/fade.c',
+    'src/fetch.c',
 ]
 
 if libpam.found()
@@ -152,7 +152,7 @@ if libpam.found()
 else
 	warning('The swaylock binary must be setuid when compiled without libpam')
 	warning('You must do this manually post-install: chmod a+s /path/to/swaylock')
-	sources += ['shadow.c']
+	sources += ['src/shadow.c']
 	dependencies += [crypt]
 endif
 

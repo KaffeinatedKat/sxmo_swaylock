@@ -1,0 +1,8 @@
+sxmo_wm.sh inputevent touchscreen on
+
+# I have swaylock-mobile installed as swaylock, will change that in the future
+while ! swaylock ; do
+	true
+done
+
+sxmo_hook_unlock.sh
