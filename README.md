@@ -16,7 +16,7 @@ does not have a proper password protected lockscreen
 Current implementation is not polished, but in it's current form suffices as a lockscreen and is 
 better than what sxmo has by default.
 
-[How to intergrate swaylock into sxmo](https://github.com/KaffeinatedKat/sxmo_swaylock/INTEGRATION.md)
+[How to intergrate swaylock into sxmo](https://github.com/KaffeinatedKat/sxmo_swaylock/blob/master/INTEGRATION.md)
 
 ## Planned Features
 
