@@ -8,7 +8,7 @@ does not have a proper password protected lockscreen
 ## Features
 
 - Everything from [swaylock-effects](https://github.com/jirutka/swaylock-effects) (I have not tested that everything works)
-- Support for displaying [notifications](https://github.com/KaffeinatedKat/sxmo_swaylock/blob/master/Notifications.md)
+- Support for displaying [notifications](https://github.com/KaffeinatedKat/sxmo_swaylock/blob/master/NOTIFICATIONS.md)
 - On screen 10 digit keypad for touchscreens 
 - Flat style indicator from swaylock-mobile
 - Basic swipe gestures to toggle the keypad (via --swipe-gestures)
