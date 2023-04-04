@@ -46,7 +46,6 @@ Handles turning on the screen, and related services
 
 - If swaylock is not installed/does not start properly, sxmo has a stroke when trying to lock the screen
 - If you get a call while the screen is off and locked, you cannot turn the screen on and have to wait for the call to expire. This might be caused by dmenu starting and stealing input handling, preventing the powerbutton from turning on the screen
-- If the can_suspend mutex is locked and the screen turns off, when turing the screen back on after a while, swaylock does not appear. I cannot tell if it never starts, or crashes for some reason
 - Sometimes when turning on the phone while locked, screen input is disabled. This is rare and hard to debug, but an issue nonetheless
 - Disables the proximity lock suspend inhibitor, which might cause issues
 - When the phone is unlocked and the proximity sensor is active and covered and you press the power button, the screen turns on for a second then locks and turns off the screen

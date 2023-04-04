@@ -1,7 +1,9 @@
+#define _POSIX_C_SOURCE 
 #include "log.h"
 #include "swaylock.h"
 #include <errno.h>
 #include <stdio.h>
+#include <signal.h>
 
 
 int fetch_notifications(struct swaylock_state *state) {
