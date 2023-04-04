@@ -18,13 +18,6 @@ int fetch_notifications(struct swaylock_state *state) {
 		state->args.notifications = false;
 		return 1;
 	}
-	
-
-	if (pipe(state->fetch.out) == -1) {
-		int err = errno;
-		swaylock_log(LOG_ERROR, "Fetch notification: pipe failed: %s", strerror(err));
-		return 1;
-	}
 
 	int pid = fork();
 
@@ -60,7 +53,6 @@ int fetch_notifications(struct swaylock_state *state) {
 	}
 
 	read(state->fetch.out[0], &state->fetch.notification_buffer, buff_size);
-	close(state->fetch.out[1]);
 	swaylock_log(LOG_DEBUG, "Notification script length: %d", buff_size);
 
 	return parse_notifications(state, state->fetch.notification_buffer, buff_size);

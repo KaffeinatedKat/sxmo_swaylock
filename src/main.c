@@ -2010,6 +2010,11 @@ int main(int argc, char **argv) {
 
 
 	if (state.args.notifications) {
+		if (pipe(state.fetch.out) == -1) {
+			int err = errno;
+			swaylock_log(LOG_ERROR, "Fetch notification: pipe failed: %s", strerror(err));
+			state.args.notifications = false;
+		}
 		fetch_notifications(&state);
 	}
 
