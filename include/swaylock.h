@@ -152,6 +152,7 @@ struct swaylock_state {
 	char *battery_capacity_path;
 	char *battery_status_path;
 	char battery_capacity[3];
+	char battery_status[1];
 	bool battery_charging;
 	int render_randnum;
 	int failed_attempts;

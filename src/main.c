@@ -1931,7 +1931,6 @@ int main(int argc, char **argv) {
 		.shell_dir = "",
 		.shell_dir_len = 0,
 		.show_keypad = true,
-		.show_music = true,
 		.swipe_gestures = false,
 		.notifications = false,
 		.battery_indicator = false,
