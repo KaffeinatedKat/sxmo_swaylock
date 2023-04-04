@@ -1901,15 +1901,14 @@ static void get_battery_timer(void *data) {
 	struct swaylock_state *state = (struct swaylock_state *)data;
 	int cap;
 	int stat;
-	char status[1];
 
 	cap = open(state->battery_capacity_path, O_RDONLY);
 	stat = open(state->battery_status_path, O_RDONLY);
 
 	read(cap, state->battery_capacity, 3);
-	read(stat, status, 1);
+	read(stat, state->battery_status, 1);
 
-	if (*status == 'C') { state->battery_charging = true; }
+	if (*state->battery_status == 'C') { state->battery_charging = true; }
 	else { state->battery_charging = false; }
 
 	close(cap);
@@ -1932,6 +1931,7 @@ int main(int argc, char **argv) {
 		.shell_dir = "",
 		.shell_dir_len = 0,
 		.show_keypad = true,
+		.show_music = true,
 		.swipe_gestures = false,
 		.notifications = false,
 		.battery_indicator = false,
