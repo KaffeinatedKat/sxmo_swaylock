@@ -7,7 +7,6 @@
 int fetch_notifications(struct swaylock_state *state) {
 	//memset(state->fetch.notification_buffer, 0, 4096);
 	int buff_size = 0;
-	int err = errno;
 
 	//  Check for errors and disable notifications
 	if (strcmp(state->args.shell_dir, "") == 0) {
@@ -22,6 +21,7 @@ int fetch_notifications(struct swaylock_state *state) {
 	
 
 	if (pipe(state->fetch.out) == -1) {
+		int err = errno;
 		swaylock_log(LOG_ERROR, "Fetch notification: pipe failed: %s", strerror(err));
 		return 1;
 	}
@@ -60,6 +60,7 @@ int fetch_notifications(struct swaylock_state *state) {
 	}
 
 	read(state->fetch.out[0], &state->fetch.notification_buffer, buff_size);
+	close(state->fetch.out[1]);
 	swaylock_log(LOG_DEBUG, "Notification script length: %d", buff_size);
 
 	return parse_notifications(state, state->fetch.notification_buffer, buff_size);
