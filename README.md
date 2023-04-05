@@ -11,17 +11,20 @@ does not have a proper password protected lockscreen
 - Support for displaying [notifications](https://github.com/KaffeinatedKat/sxmo_swaylock/blob/master/NOTIFICATIONS.md)
 - On screen 10 digit keypad for touchscreens 
 - Flat style indicator from swaylock-mobile
+- Customizable indicator length (via --indicator-length)
 - Basic swipe gestures to toggle the keypad (via --swipe-gestures)
+- Battery indicator that replaces the swaylock typing indicator (via --battery-indicator)
 
-Current implementation is not polished, but in it's current form suffices as a lockscreen and is 
+Current implementation is not super polished, but in it's current form suffices as a lockscreen and is 
 better than what sxmo has by default.
 
 [How to intergrate swaylock into sxmo](https://github.com/KaffeinatedKat/sxmo_swaylock/blob/master/INTEGRATION.md)
 
 ## Planned Features
 
+- Smooth animation for the keyboard swipe
 - More presise swipe gesture detection + more swipe gestures
-- Indicator modules (battery, weather, etc)
+- Indicator modules (weather, etc)
 - Maybe a full keyboard instead of just the numbered keypad
 - More customization in regards to the keypad
 
