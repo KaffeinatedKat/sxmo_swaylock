@@ -8,6 +8,7 @@
 #include <wayland-client.h>
 #include "cairo.h"
 #include "background-image.h"
+#include "log.h"
 #include "swaylock.h"
 
 #define M_PI 3.14159265358979323846
@@ -66,6 +67,28 @@ static void timetext(struct swaylock_surface *surface, char **tstr, char **dstr)
 	setlocale(LC_TIME, prevloc);
 }
 
+cairo_t *cairo_init(struct swaylock_surface *surface) {
+	cairo_t *cairo = surface->current_buffer->cairo;
+	cairo_set_antialias(cairo, CAIRO_ANTIALIAS_BEST);
+	cairo_font_options_t *fo = cairo_font_options_create();
+	cairo_font_options_set_hint_style(fo, CAIRO_HINT_STYLE_FULL);
+	cairo_font_options_set_antialias(fo, CAIRO_ANTIALIAS_SUBPIXEL);
+	cairo_font_options_set_subpixel_order(fo, to_cairo_subpixel_order(surface->subpixel));
+	cairo_set_font_options(cairo, fo);
+	cairo_font_options_destroy(fo);
+	cairo_identity_matrix(cairo);
+
+	// Clear
+	cairo_save(cairo);
+	cairo_set_source_rgba(cairo, 0, 0, 0, 0);
+	cairo_set_operator(cairo, CAIRO_OPERATOR_SOURCE);
+	cairo_paint(cairo);
+	cairo_restore(cairo);
+
+	return cairo;
+}
+
+
 void draw_notification(cairo_t *cairo, struct swaylock_state *state,
 		char text[30], char *timestamp, int pos_x, int pos_y, int width, int height) {
 
@@ -112,6 +135,39 @@ void draw_keypad_key(cairo_t *cairo, struct swaylock_state *state,
 	set_color_for_state(cairo, state, &state->args.colors.text);
 	cairo_move_to(cairo, pos_x + (width - extents.width) / 2, pos_y + height / 2 + fe.ascent / 2);
 	cairo_show_text(cairo, text);
+}
+
+
+void draw_button(cairo_t *cairo, struct swaylock_surface *surface, char *text, int buffer_width, int buffer_height,
+		int x_divisions, int y_divisions, int x_pos, int y_pos) {
+	int length = buffer_width / x_divisions;
+	int height = buffer_height / y_divisions;
+	int x_spacer = 0, y_spacer = 0;
+
+	for (int x = 0; x < x_divisions; x++) {
+		for (int y = 0; y < y_divisions; y++) {
+			//  Reset y_spacer at new loop
+			if (y == 0) y_spacer = 0;
+
+			//  Draw the button and return
+			if (y == y_pos && x == x_pos) {
+				cairo_rectangle(cairo, surface->scale + x_spacer, surface->scale + y_spacer, length, height);
+				cairo_stroke(cairo);
+				// Draw text
+				cairo_text_extents_t extents;
+				cairo_font_extents_t fe;
+				cairo_text_extents(cairo, text, &extents);
+				cairo_font_extents(cairo, &fe);
+				set_color_for_state(cairo, surface->state, &surface->state->args.colors.text);
+				cairo_move_to(cairo, surface->scale + x_spacer + (length - extents.width) / 2, surface->scale + y_spacer + height / 2 + fe.ascent / 2);
+				cairo_show_text(cairo, text);
+				
+				return;
+			}
+			y_spacer += height;
+		}
+		x_spacer += length;
+	}
 }
 
 
@@ -225,22 +281,7 @@ void render_indicator_frame(struct swaylock_surface *surface) {
 	wl_surface_attach(surface->child, NULL, 0, 0);
 	wl_surface_commit(surface->child);
 
-	cairo_t *cairo = surface->current_buffer->cairo;
-	cairo_set_antialias(cairo, CAIRO_ANTIALIAS_BEST);
-	cairo_font_options_t *fo = cairo_font_options_create();
-	cairo_font_options_set_hint_style(fo, CAIRO_HINT_STYLE_FULL);
-	cairo_font_options_set_antialias(fo, CAIRO_ANTIALIAS_SUBPIXEL);
-	cairo_font_options_set_subpixel_order(fo, to_cairo_subpixel_order(surface->subpixel));
-	cairo_set_font_options(cairo, fo);
-	cairo_font_options_destroy(fo);
-	cairo_identity_matrix(cairo);
-
-	// Clear
-	cairo_save(cairo);
-	cairo_set_source_rgba(cairo, 0, 0, 0, 0);
-	cairo_set_operator(cairo, CAIRO_OPERATOR_SOURCE);
-	cairo_paint(cairo);
-	cairo_restore(cairo);
+	cairo_t *cairo = cairo_init(surface);
 
 	// This is a bit messy.
 	// After the fork, upstream added their own --indicator-idle-visible option,
@@ -453,9 +494,13 @@ void render_indicator_frame(struct swaylock_surface *surface) {
 		cairo_set_line_width(cairo, 2.0 * surface->scale);
 		cairo_stroke(cairo);
 
-		cairo_rectangle(cairo, surface->scale, surface->scale, buffer_width-(surface->scale*2), buffer_height-(surface->scale*2)); 
-		cairo_stroke(cairo);
 
+		cairo_rectangle(cairo, surface->scale, surface->scale, buffer_width-(surface->scale*2), buffer_height-(surface->scale*2));
+
+        //draw_button(cairo, surface, "hi", buffer_width, buffer_height, 5, 5, 4, 3);
+        cairo_stroke(cairo);
+
+		//cairo_set_source_u32(cairo, state->args.colors.separator);
 		cairo_rectangle(cairo, surface->scale, surface->scale, buffer_width, arc_thickness);
 		cairo_stroke(cairo);
 
@@ -537,6 +582,7 @@ void render_notifications(cairo_t *cairo, struct swaylock_state *state, int spac
 	}
 }
 
+
 void render_keypad_frame(struct swaylock_surface *surface) {
 	struct swaylock_state *state = surface->state;
 
@@ -569,33 +615,18 @@ void render_keypad_frame(struct swaylock_surface *surface) {
 	int new_height = buffer_height;
 	
 	wl_subsurface_set_position(surface->keypad_subsurface, subsurf_xpos, subsurf_ypos);
-	
+
 	surface->current_buffer = get_next_buffer(state->shm,
 			surface->keypad_buffers, buffer_width, buffer_height);
 	if (surface->current_buffer == NULL) {
 		return;
 	}
-	
+
 	// Hide subsurface until we want it visible
 	wl_surface_attach(surface->keypad_child, NULL, 0, 0);
 	wl_surface_commit(surface->keypad_child);
-	
-	cairo_t *cairo = surface->current_buffer->cairo;
-	cairo_set_antialias(cairo, CAIRO_ANTIALIAS_BEST);
-	cairo_font_options_t *fo = cairo_font_options_create();
-	cairo_font_options_set_hint_style(fo, CAIRO_HINT_STYLE_FULL);
-	cairo_font_options_set_antialias(fo, CAIRO_ANTIALIAS_SUBPIXEL);
-	cairo_font_options_set_subpixel_order(fo, to_cairo_subpixel_order(surface->subpixel));
-	cairo_set_font_options(cairo, fo);
-	cairo_font_options_destroy(fo);
-	cairo_identity_matrix(cairo);
-	
-	// Clear
-	cairo_save(cairo);
-	cairo_set_source_rgba(cairo, 0, 0, 0, 0);
-	cairo_set_operator(cairo, CAIRO_OPERATOR_SOURCE);
-	cairo_paint(cairo);
-	cairo_restore(cairo);
+
+	cairo_t *cairo = cairo_init(surface);
 	
 	cairo_select_font_face(cairo, state->args.font,
 			CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
@@ -624,7 +655,7 @@ void render_keypad_frame(struct swaylock_surface *surface) {
 	int key_height = (buffer_height - spacing * 6) / 5;
 
 	int pos_x = spacing;
-	int pos_y = spacing * 5 + key_height * 4;
+	int pos_y = (spacing * 5 + key_height * 4);
 
 	if (state->args.show_keypad) {
 		char label[2];
@@ -649,9 +680,11 @@ void render_keypad_frame(struct swaylock_surface *surface) {
 		draw_keypad_key(cairo, state, "Unlock", pos_x, pos_y, key_width*3+spacing*2, key_height);
 
 	} else if (state->args.show_keypad == 0 && state->args.notifications) {
-		render_notifications(cairo, state, spacing, key_height, key_width, pos_x, pos_y);
-	}
-	
+        render_notifications(cairo, state, spacing, key_height, key_width, pos_x, pos_y);
+    }
+
+
+
 	// Make sure the keypad fits on the screen
 	if ((uint32_t)(new_width + margin*2) > (surface->width * surface->scale)) {
 		new_width = surface->width * surface->scale - margin*2;

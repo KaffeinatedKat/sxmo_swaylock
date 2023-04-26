@@ -43,6 +43,7 @@ cairo_surface_t *cairo_surface_duplicate(cairo_surface_t *src) {
 	return cairo_image_surface_create_for_data(new_data, format, width, height, stride);
 }
 
+
 #if HAVE_GDK_PIXBUF
 cairo_surface_t* gdk_cairo_image_surface_create_from_pixbuf(const GdkPixbuf *gdkbuf) {
 	int chan = gdk_pixbuf_get_n_channels(gdkbuf);

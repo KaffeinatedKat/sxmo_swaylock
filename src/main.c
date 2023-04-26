@@ -260,6 +260,9 @@ static void destroy_surface(struct swaylock_surface *surface) {
 	destroy_buffer(&surface->indicator_buffers[1]);
 	destroy_buffer(&surface->keypad_buffers[0]);
 	destroy_buffer(&surface->keypad_buffers[1]);
+    destroy_buffer(&surface->notification_buffers[0]);
+    destroy_buffer(&surface->notification_buffers[1]);
+
 	wl_output_destroy(surface->output);
 	free(surface);
 }
@@ -305,6 +308,7 @@ static void create_surface(struct swaylock_surface *surface) {
 	surface->keypad_subsurface = wl_subcompositor_get_subsurface(state->subcompositor, surface->keypad_child, surface->surface);
 	assert(surface->keypad_subsurface);
 	wl_subsurface_set_sync(surface->keypad_subsurface);
+
 
 	if (state->ext_session_lock_v1) {
 		surface->ext_session_lock_surface_v1 = ext_session_lock_v1_get_lock_surface(

@@ -89,6 +89,7 @@ struct swaylock_args {
 	uint32_t notification_count;
 	bool battery_indicator;
 	bool notifications;
+	bool music;
 	bool override_indicator_x_position;
 	bool override_indicator_y_position;
 	bool override_indicator_length;
@@ -96,6 +97,7 @@ struct swaylock_args {
 	bool ignore_empty;
 	bool show_indicator;
 	bool show_keypad;
+	bool show_music;
 	bool show_quickaction;
 	bool show_caps_lock_text;
 	bool show_caps_lock_indicator;
@@ -183,12 +185,15 @@ struct swaylock_surface {
 	struct wl_subsurface *subsurface;
 	struct wl_surface *keypad_child;
 	struct wl_subsurface *keypad_subsurface;
+	struct wl_surface *notification_child;
+	struct wl_subsurface *notification_subsurface;
 	struct zwlr_layer_surface_v1 *layer_surface;
 	struct zwlr_screencopy_frame_v1 *screencopy_frame;
 	struct ext_session_lock_surface_v1 *ext_session_lock_surface_v1;
 	struct pool_buffer buffers[2];
 	struct pool_buffer indicator_buffers[2];
 	struct pool_buffer keypad_buffers[2];
+    struct pool_buffer notification_buffers[2];
 	struct pool_buffer *current_buffer;
 	struct swaylock_fade fade;
 	int events_pending;
@@ -197,6 +202,7 @@ struct swaylock_surface {
 	uint32_t width, height;
 	uint32_t indicator_width, indicator_height;
 	uint32_t keypad_width, keypad_height;
+	uint32_t notification_witdh, notification_height;
 	int32_t scale;
 	enum wl_output_subpixel subpixel;
 	enum wl_output_transform transform;
@@ -212,6 +218,7 @@ struct swaylock_image {
 	struct wl_list link;
 };
 
+cairo_t *cairo_init(struct swaylock_surface *surface);
 void swaylock_handle_key(struct swaylock_state *state,
 		xkb_keysym_t keysym, uint32_t codepoint);
 void swaylock_handle_mouse(struct swaylock_state *state);
@@ -220,9 +227,12 @@ void render_frame_background(struct swaylock_surface *surface, bool commit);
 void render_background_fade(struct swaylock_surface *surface, uint32_t time);
 void render_indicator_frame(struct swaylock_surface *surface);
 void render_keypad_frame(struct swaylock_surface *surface);
+void render_notification_frame(struct swaylock_surface *surface);
 void render_frames(struct swaylock_state *state);
 void render_notifications(cairo_t *cario, struct swaylock_state *state, int spacing,
 		int key_height, int key_width, int pos_x, int pos_y);
+void draw_button(cairo_t *cairo, struct swaylock_surface *surface, char *text, int buffer_width, int buffer_height, 
+		int x_divisions, int y_divisions, int x_pos, int y_pos);
 void damage_surface(struct swaylock_surface *surface);
 void damage_state(struct swaylock_state *state);
 void clear_password_buffer(struct swaylock_password *pw);
